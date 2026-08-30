@@ -100,7 +100,7 @@ export const Setups: React.FC = () => {
       stopLossModel: editingSetup.stopLossModel || '',
       takeProfitModel: editingSetup.takeProfitModel || '',
       minimumRR: Number(editingSetup.minimumRR) || 1.5,
-      defaultRiskPercent: Number(editingSetup.defaultRiskPercent) || 1.0,
+      defaultRiskPercent: editingSetup.defaultRiskPercent !== undefined && !isNaN(Number(editingSetup.defaultRiskPercent)) ? Number(editingSetup.defaultRiskPercent) : 1.0,
       rules: editingSetup.rules || [],
       invalidConditions: editingSetup.invalidConditions || [],
       checklist: (editingSetup.checklist || []).map((item, idx) => ({
@@ -303,8 +303,11 @@ export const Setups: React.FC = () => {
                     <input
                       type="number"
                       step="0.1"
-                      value={editingSetup.defaultRiskPercent ?? 1.0}
-                      onChange={e => setEditingSetup({ ...editingSetup, defaultRiskPercent: parseFloat(e.target.value) || 1.0 })}
+                      value={editingSetup.defaultRiskPercent ?? 0}
+                      onChange={e => {
+                        const parsed = parseFloat(e.target.value);
+                        setEditingSetup({ ...editingSetup, defaultRiskPercent: isNaN(parsed) ? 0 : parsed });
+                      }}
                       className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
                     />
                   </div>

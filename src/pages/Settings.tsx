@@ -56,7 +56,10 @@ export const SettingsPage: React.FC = () => {
                   type="number"
                   step="0.1"
                   value={formSettings.defaultRiskPercent}
-                  onChange={e => setFormSettings({ ...formSettings, defaultRiskPercent: parseFloat(e.target.value) || 1.0 })}
+                  onChange={e => {
+                    const parsed = parseFloat(e.target.value);
+                    setFormSettings({ ...formSettings, defaultRiskPercent: isNaN(parsed) ? 0 : parsed });
+                  }}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono"
                 />
               </div>
@@ -83,7 +86,10 @@ export const SettingsPage: React.FC = () => {
                   type="number"
                   step="0.1"
                   value={formSettings.warningRiskMaxPercent}
-                  onChange={e => setFormSettings({ ...formSettings, warningRiskMaxPercent: parseFloat(e.target.value) || 3.0 })}
+                  onChange={e => {
+                    const parsed = parseFloat(e.target.value);
+                    setFormSettings({ ...formSettings, warningRiskMaxPercent: isNaN(parsed) ? 0 : parsed });
+                  }}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono"
                 />
               </div>

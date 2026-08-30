@@ -51,9 +51,9 @@ export const Accounts: React.FC = () => {
       currency: editingAccount.currency || '$',
       initialBalance: Number(editingAccount.initialBalance) || 0,
       currentBalance: Number(editingAccount.currentBalance) || Number(editingAccount.initialBalance) || 0,
-      defaultRiskPercent: Number(editingAccount.defaultRiskPercent) || 1.0,
-      dailyLossLimitPercent: Number(editingAccount.dailyLossLimitPercent) || 3.0,
-      maxDrawdownPercent: Number(editingAccount.maxDrawdownPercent) || 6.0,
+      defaultRiskPercent: editingAccount.defaultRiskPercent !== undefined && !isNaN(Number(editingAccount.defaultRiskPercent)) ? Number(editingAccount.defaultRiskPercent) : 1.0,
+      dailyLossLimitPercent: editingAccount.dailyLossLimitPercent !== undefined && !isNaN(Number(editingAccount.dailyLossLimitPercent)) ? Number(editingAccount.dailyLossLimitPercent) : 3.0,
+      maxDrawdownPercent: editingAccount.maxDrawdownPercent !== undefined && !isNaN(Number(editingAccount.maxDrawdownPercent)) ? Number(editingAccount.maxDrawdownPercent) : 6.0,
       tradingStyle: editingAccount.tradingStyle || '',
       status: editingAccount.status || 'Active',
       notes: editingAccount.notes || '',
@@ -281,8 +281,11 @@ export const Accounts: React.FC = () => {
                   type="number"
                   step="0.1"
                   required
-                  value={editingAccount.defaultRiskPercent ?? 1.0}
-                  onChange={e => setEditingAccount({ ...editingAccount, defaultRiskPercent: parseFloat(e.target.value) || 1.0 })}
+                  value={editingAccount.defaultRiskPercent ?? 0}
+                  onChange={e => {
+                    const parsed = parseFloat(e.target.value);
+                    setEditingAccount({ ...editingAccount, defaultRiskPercent: isNaN(parsed) ? 0 : parsed });
+                  }}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none font-mono"
                 />
               </div>
@@ -294,8 +297,11 @@ export const Accounts: React.FC = () => {
                 <input
                   type="number"
                   step="0.1"
-                  value={editingAccount.dailyLossLimitPercent ?? 3.0}
-                  onChange={e => setEditingAccount({ ...editingAccount, dailyLossLimitPercent: parseFloat(e.target.value) || 3.0 })}
+                  value={editingAccount.dailyLossLimitPercent ?? 0}
+                  onChange={e => {
+                    const parsed = parseFloat(e.target.value);
+                    setEditingAccount({ ...editingAccount, dailyLossLimitPercent: isNaN(parsed) ? 0 : parsed });
+                  }}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none font-mono"
                 />
               </div>
@@ -305,8 +311,11 @@ export const Accounts: React.FC = () => {
                 <input
                   type="number"
                   step="0.1"
-                  value={editingAccount.maxDrawdownPercent ?? 6.0}
-                  onChange={e => setEditingAccount({ ...editingAccount, maxDrawdownPercent: parseFloat(e.target.value) || 6.0 })}
+                  value={editingAccount.maxDrawdownPercent ?? 0}
+                  onChange={e => {
+                    const parsed = parseFloat(e.target.value);
+                    setEditingAccount({ ...editingAccount, maxDrawdownPercent: isNaN(parsed) ? 0 : parsed });
+                  }}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none font-mono"
                 />
               </div>

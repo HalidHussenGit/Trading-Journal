@@ -18,16 +18,16 @@ export function validateAccount(account: Partial<Account>): ValidationResult {
     errors.push('Initial balance must be a non-negative number.');
   }
 
-  if (account.defaultRiskPercent !== undefined && (account.defaultRiskPercent <= 0 || account.defaultRiskPercent > 100)) {
-    errors.push('Default risk percent must be between 0.01% and 100%.');
+  if (account.defaultRiskPercent !== undefined && (account.defaultRiskPercent < 0 || account.defaultRiskPercent > 100)) {
+    errors.push('Default risk percent must be between 0% and 100%.');
   }
 
-  if (account.dailyLossLimitPercent !== undefined && (account.dailyLossLimitPercent <= 0 || account.dailyLossLimitPercent > 100)) {
-    errors.push('Daily loss limit percent must be between 0.01% and 100%.');
+  if (account.dailyLossLimitPercent !== undefined && (account.dailyLossLimitPercent < 0 || account.dailyLossLimitPercent > 100)) {
+    errors.push('Daily loss limit percent must be between 0% and 100%.');
   }
 
-  if (account.maxDrawdownPercent !== undefined && (account.maxDrawdownPercent <= 0 || account.maxDrawdownPercent > 100)) {
-    errors.push('Max drawdown percent must be between 0.01% and 100%.');
+  if (account.maxDrawdownPercent !== undefined && (account.maxDrawdownPercent < 0 || account.maxDrawdownPercent > 100)) {
+    errors.push('Max drawdown percent must be between 0% and 100%.');
   }
 
   return {

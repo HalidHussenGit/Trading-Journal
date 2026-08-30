@@ -118,7 +118,7 @@ export const RiskManagement: React.FC = () => {
                 <div className="w-full bg-slate-100 h-2 rounded overflow-hidden">
                   <div
                     className={`h-full ${isWarning ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${Math.min(100, (openRiskPct / acc.dailyLossLimitPercent) * 100)}%` }}
+                    style={{ width: `${acc.dailyLossLimitPercent && acc.dailyLossLimitPercent > 0 ? Math.min(100, (openRiskPct / acc.dailyLossLimitPercent) * 100) : 0}%` }}
                   />
                 </div>
               </div>
