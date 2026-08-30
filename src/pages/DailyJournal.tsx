@@ -14,6 +14,14 @@ export const DailyJournal: React.FC = () => {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
+  const monthsList = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Years starting from 2020 for backtesting support
+  const availableYears = Array.from({ length: 16 }, (_, i) => 2020 + i);
+
   const firstDayOfMonth = new Date(year, month, 1);
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const daysInMonth = lastDayOfMonth.getDate();
@@ -62,51 +70,98 @@ export const DailyJournal: React.FC = () => {
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       {/* Calendar Header & Monthly Summary Bar */}
-      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-base font-bold text-slate-900">
-            {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-          </h2>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
-              className="p-1.5 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-xs font-bold"
-            >
-              ← Prev
-            </button>
-            <button
-              onClick={() => setCurrentMonth(new Date())}
-              className="px-2.5 py-1.5 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-xs font-medium"
-            >
-              Today
-            </button>
-            <button
-              onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
-              className="p-1.5 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-xs font-bold"
-            >
-              Next →
-            </button>
+      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-bold text-slate-900 min-w-[160px]">
+              {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </h2>
+
+            {/* Direct Month & Year Dropdown Selectors */}
+            <div className="flex items-center gap-2">
+              <select
+                value={month}
+                onChange={(e) => setCurrentMonth(new Date(year, parseInt(e.target.value), 1))}
+                className="px-2.5 py-1.5 border border-slate-300 rounded text-xs font-semibold text-slate-800 bg-white focus:ring-1 focus:ring-slate-900 focus:outline-none cursor-pointer"
+              >
+                {monthsList.map((mName, idx) => (
+                  <option key={idx} value={idx}>{mName}</option>
+                ))}
+              </select>
+
+              <select
+                value={year}
+                onChange={(e) => setCurrentMonth(new Date(parseInt(e.target.value), month, 1))}
+                className="px-2.5 py-1.5 border border-slate-300 rounded text-xs font-bold text-slate-800 bg-white focus:ring-1 focus:ring-slate-900 focus:outline-none cursor-pointer font-mono"
+              >
+                {availableYears.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Stepper Buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
+                className="px-2.5 py-1.5 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-xs font-bold"
+                title="Previous Month"
+              >
+                ← Prev
+              </button>
+              <button
+                onClick={() => setCurrentMonth(new Date())}
+                className="px-2.5 py-1.5 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-xs font-medium"
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
+                className="px-2.5 py-1.5 border border-slate-300 rounded text-slate-600 hover:bg-slate-50 text-xs font-bold"
+                title="Next Month"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+
+          {/* Monthly Summary Statistics */}
+          <div className="flex items-center gap-4 text-xs font-mono">
+            <div>
+              <span className="text-slate-400 text-[10px] uppercase block">Trading Days</span>
+              <span className="font-bold text-slate-900">{monthTradingDaysCount} days</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[10px] uppercase block">Monthly Net P&L</span>
+              <span className={`font-bold ${monthNetPL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {monthNetPL >= 0 ? '+' : ''}${monthNetPL.toLocaleString()}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[10px] uppercase block">Monthly Net R</span>
+              <span className={`font-bold ${monthNetR >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {monthNetR >= 0 ? '+' : ''}{monthNetR}R
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Monthly Summary Statistics */}
-        <div className="flex items-center gap-4 text-xs font-mono">
-          <div>
-            <span className="text-slate-400 text-[10px] uppercase block">Trading Days</span>
-            <span className="font-bold text-slate-900">{monthTradingDaysCount} days</span>
-          </div>
-          <div>
-            <span className="text-slate-400 text-[10px] uppercase block">Monthly Net P&L</span>
-            <span className={`font-bold ${monthNetPL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {monthNetPL >= 0 ? '+' : ''}${monthNetPL.toLocaleString()}
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-400 text-[10px] uppercase block">Monthly Net R</span>
-            <span className={`font-bold ${monthNetR >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {monthNetR >= 0 ? '+' : ''}{monthNetR}R
-            </span>
-          </div>
+        {/* Quick Backtest Year Selector Bar */}
+        <div className="flex items-center gap-1.5 pt-3 border-t border-slate-100 overflow-x-auto">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1">Backtest Years:</span>
+          {[2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027].map(y => (
+            <button
+              key={y}
+              onClick={() => setCurrentMonth(new Date(y, month, 1))}
+              className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
+                year === y
+                  ? 'bg-slate-900 text-white font-bold shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {y}
+            </button>
+          ))}
         </div>
       </div>
 
