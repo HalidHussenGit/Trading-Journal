@@ -14,23 +14,26 @@ import { RiskManagement } from './pages/RiskManagement';
 import { SettingsPage } from './pages/Settings';
 import { BackupRestore } from './pages/BackupRestore';
 
+import { useJournal } from './context/JournalContext';
+
 export const AppContent: React.FC = () => {
+  const { trades } = useJournal();
   const [activePage, setActivePage] = useState<PageId>('dashboard');
   const [activeTradeId, setActiveTradeId] = useState<string | null>(null);
 
   const handleNavigate = (page: PageId, tradeId?: string) => {
     setActivePage(page);
-    if (tradeId) {
-      setActiveTradeId(tradeId);
-    }
+    setActiveTradeId(tradeId || null);
   };
+
+  const activeTrade = trades.find(t => t.id === activeTradeId) || null;
 
   const pageTitles: Record<PageId, string> = {
     dashboard: 'Dashboard',
     calendar: 'Trading Calendar & Journal',
     accounts: 'Accounts',
     setups: 'Setups & Checklists',
-    'new-trade': 'New Trade Log',
+    'new-trade': activeTrade ? 'Edit Trade Record' : 'New Trade Log',
     trades: 'Trades Log',
     'trade-detail': 'Trade Detail View',
     'daily-journal': 'Trading Calendar & Journal',
@@ -51,7 +54,7 @@ export const AppContent: React.FC = () => {
           {(activePage === 'calendar' || activePage === 'daily-journal') && <DailyJournal onNavigate={handleNavigate} />}
           {activePage === 'accounts' && <Accounts />}
           {activePage === 'setups' && <Setups />}
-          {activePage === 'new-trade' && <NewTrade onNavigate={handleNavigate} />}
+          {activePage === 'new-trade' && <NewTrade onNavigate={handleNavigate} existingTrade={activeTrade} />}
           {activePage === 'trades' && <Trades onNavigate={handleNavigate} />}
           {activePage === 'trade-detail' && <TradeDetail tradeId={activeTradeId} onNavigate={handleNavigate} />}
           {activePage === 'analytics' && <Analytics />}

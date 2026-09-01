@@ -16,21 +16,21 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const [activeStep, setActiveStep] = useState<number>(1);
 
   // Form State
-  const [tradeId] = useState<string>(existingTrade?.id || '');
+  const [tradeId, setTradeId] = useState<string>(existingTrade?.id || '');
   const [accountId, setAccountId] = useState<string>(existingTrade?.accountId || accounts[0]?.id || '');
   const [setupId, setSetupId] = useState<string>(existingTrade?.setupId || setups[0]?.id || '');
   const [symbol, setSymbol] = useState<string>(existingTrade?.symbol || 'EURUSD');
   const [direction, setDirection] = useState<'Long' | 'Short'>(existingTrade?.direction || 'Long');
-  const [status, setStatus] = useState<any>(existingTrade?.status || 'Open');
+  const [status, setStatus] = useState<any>(existingTrade?.status || 'Draft');
   const [date, setDate] = useState<string>(existingTrade?.date || new Date().toISOString().split('T')[0]);
-  const [time] = useState<string>(existingTrade?.time || new Date().toTimeString().slice(0, 5));
+  const [time, setTime] = useState<string>(existingTrade?.time || new Date().toTimeString().slice(0, 5));
   const [session, setSession] = useState<any>(existingTrade?.session || 'London');
-  const [timeframe] = useState<string>(existingTrade?.timeframe || '15m');
-  const [marketCondition] = useState<string>(existingTrade?.marketCondition || 'Trending');
+  const [timeframe, setTimeframe] = useState<string>(existingTrade?.timeframe || '15m');
+  const [marketCondition, setMarketCondition] = useState<string>(existingTrade?.marketCondition || 'Trending');
   const [tagInput, setTagInput] = useState<string>('');
   const [tags, setTags] = useState<string[]>(existingTrade?.tags || []);
 
-  // Planned & Risk Sizing State (riskPercent fixed/defaulted behind scenes)
+  // Planned & Risk Sizing State
   const [entryPrice, setEntryPrice] = useState<number>(existingTrade?.planned?.entry || 1.0850);
   const [stopLossPrice, setStopLossPrice] = useState<number>(existingTrade?.planned?.stopLoss || 1.0830);
   const [takeProfitPrice, setTakeProfitPrice] = useState<number>(existingTrade?.planned?.takeProfit || 1.0910);
@@ -44,7 +44,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   // Checklist Snapshot State
   const [checklistItems, setChecklistItems] = useState<TradeChecklistSnapshotItem[]>([]);
 
-  // Thesis & Single Screenshot (merged in Trade Info step 1)
+  // Thesis & Single Screenshot
   const [thesis, setThesis] = useState<string>(existingTrade?.journal?.thesis || '');
   const [screenshot, setScreenshot] = useState<{ id: string; category: ScreenshotCategory; caption: string; file?: File; previewUrl?: string } | null>(
     existingTrade?.screenshots && existingTrade.screenshots.length > 0
@@ -54,9 +54,47 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
 
   const [violations] = useState<string[]>(existingTrade?.violations || []);
 
-  // Sync checklist from setup when setupId changes
+  // Sync state when existingTrade changes
   useEffect(() => {
-    if (existingTrade && existingTrade.checklistSnapshot) {
+    if (existingTrade) {
+      setTradeId(existingTrade.id);
+      setAccountId(existingTrade.accountId);
+      setSetupId(existingTrade.setupId || setups[0]?.id || '');
+      setSymbol(existingTrade.symbol);
+      setDirection(existingTrade.direction);
+      setStatus(existingTrade.status);
+      setDate(existingTrade.date);
+      setTime(existingTrade.time || new Date().toTimeString().slice(0, 5));
+      setSession(existingTrade.session || 'London');
+      setTimeframe(existingTrade.timeframe || '15m');
+      setMarketCondition(existingTrade.marketCondition || 'Trending');
+      setTags(existingTrade.tags || []);
+      setEntryPrice(existingTrade.planned?.entry || 1.0850);
+      setStopLossPrice(existingTrade.planned?.stopLoss || 1.0830);
+      setTakeProfitPrice(existingTrade.planned?.takeProfit || 1.0910);
+      setExits(existingTrade.exits && existingTrade.exits.length > 0 ? existingTrade.exits : [
+        { id: '', levelName: 'TP1', exitPrice: existingTrade.planned?.takeProfit || 1.0910, sizePercent: 100, realizedPL: 0, realizedR: 0, exitReason: 'Target Reached', timestamp: new Date().toISOString() }
+      ]);
+      if (existingTrade.checklistSnapshot?.items) {
+        setChecklistItems(existingTrade.checklistSnapshot.items);
+      }
+      setThesis(existingTrade.journal?.thesis || '');
+      if (existingTrade.screenshots && existingTrade.screenshots.length > 0) {
+        setScreenshot({
+          id: existingTrade.screenshots[0].id,
+          category: existingTrade.screenshots[0].category,
+          caption: existingTrade.screenshots[0].caption,
+          previewUrl: existingTrade.screenshots[0].previewUrl
+        });
+      } else {
+        setScreenshot(null);
+      }
+    }
+  }, [existingTrade]);
+
+  // Sync checklist from setup when setupId changes and not editing an existing snapshot
+  useEffect(() => {
+    if (existingTrade && existingTrade.checklistSnapshot && existingTrade.setupId === setupId) {
       setChecklistItems(existingTrade.checklistSnapshot.items || []);
     } else {
       const selectedSetup = setups.find(s => s.id === setupId);
@@ -71,7 +109,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         })));
       }
     }
-  }, [setupId, setups]);
+  }, [setupId, setups, existingTrade]);
 
   // Account balance lookup
   const selectedAccount = accounts.find(a => a.id === accountId);
@@ -109,7 +147,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const previewUrl = URL.createObjectURL(file);
-      // Generate a unique key so the storage path is never empty
       const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       setScreenshot({
         id: uniqueId,
@@ -121,21 +158,17 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     }
   };
 
-  // Save Trade Execution — always saves as Draft.
-  // Users close trades (set outcome, P&L, R) via the Close Trade modal
-  // accessible from the Trades list and Calendar page.
   const handleSaveTrade = async () => {
     const savedScreenshots: TradeScreenshot[] = [];
     if (screenshot) {
-      // Use the returned path from saveScreenshotBlob as the authoritative storageKey
       let storageKey = screenshot.id;
       if (screenshot.file) {
         const savedPath = await saveScreenshotBlob(screenshot.id, screenshot.file);
-        storageKey = savedPath; // could be a file path or a data: fallback URL
+        storageKey = savedPath;
       }
       savedScreenshots.push({
         id: screenshot.id,
-        tradeId,
+        tradeId: tradeId || '',
         category: screenshot.category,
         caption: screenshot.caption,
         storageKey,
@@ -151,7 +184,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       setupId,
       symbol: symbol.toUpperCase().trim(),
       direction,
-      status: 'Draft',
+      status: existingTrade?.status || status || 'Draft',
       date,
       time,
       session,
@@ -169,7 +202,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         positionSize: riskCalc.positionSize
       },
 
-      actual: {
+      actual: existingTrade?.actual || {
         entry: entryPrice,
         exit: 0,
         positionSize: riskCalc.positionSize,
@@ -182,7 +215,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
 
       exits,
 
-      result: {
+      result: existingTrade?.result || {
         status: 'Custom',
         netPL: 0,
         grossPL: 0,
@@ -196,7 +229,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         items: checklistItems
       },
 
-      psychology: {
+      psychology: existingTrade?.psychology || {
         preTradeEmotion: 'Calm',
         confidenceRating: 8,
         focusRating: 8,
@@ -205,7 +238,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         energyRating: 8
       },
 
-      qualityScores: {
+      qualityScores: existingTrade?.qualityScores || {
         setup: 8,
         execution: 8,
         riskManagement: 8,
@@ -215,22 +248,22 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       },
 
       violations,
-      screenshots: savedScreenshots,
+      screenshots: savedScreenshots.length > 0 ? savedScreenshots : (existingTrade?.screenshots || []),
       journal: {
         thesis,
-        whatWentWell: '',
-        whatWentWrong: '',
-        followedPlan: missingRequired.length === 0 ? 'Yes' : 'Partially',
-        interferedDuringTrade: false,
-        movedStopLoss: false,
-        closedEarly: false,
-        hesitatedOnEntry: false,
-        revengeOrOvertraded: false,
-        lessonsLearned: '',
-        whatToDoDifferently: ''
+        whatWentWell: existingTrade?.journal?.whatWentWell || '',
+        whatWentWrong: existingTrade?.journal?.whatWentWrong || '',
+        followedPlan: (missingRequired.length === 0 ? 'Yes' : 'Partially') as any,
+        interferedDuringTrade: existingTrade?.journal?.interferedDuringTrade ?? false,
+        movedStopLoss: existingTrade?.journal?.movedStopLoss ?? false,
+        closedEarly: existingTrade?.journal?.closedEarly ?? false,
+        hesitatedOnEntry: existingTrade?.journal?.hesitatedOnEntry ?? false,
+        revengeOrOvertraded: existingTrade?.journal?.revengeOrOvertraded ?? false,
+        lessonsLearned: existingTrade?.journal?.lessonsLearned || '',
+        whatToDoDifferently: existingTrade?.journal?.whatToDoDifferently || ''
       },
 
-      timeline: [
+      timeline: existingTrade?.timeline || [
         { id: '', timestamp: new Date().toISOString(), type: 'Created', description: 'Trade logged as Draft' }
       ],
 
@@ -245,7 +278,11 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     }
 
     await saveTrade(newTradeRecord);
-    onNavigate('trades');
+    if (existingTrade) {
+      onNavigate('trade-detail', tradeId);
+    } else {
+      onNavigate('trades');
+    }
   };
 
   return (
@@ -271,7 +308,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         ))}
       </div>
 
-      {/* STEP 1: TRADE INFO (Integrated Metadata, Thesis & Screenshot) */}
+      {/* STEP 1: TRADE INFO */}
       {activeStep === 1 && (
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-6">
           <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Identification & Details</h3>
@@ -336,10 +373,10 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 onChange={e => setStatus(e.target.value as any)}
                 className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
               >
+                <option value="Draft">Draft</option>
                 <option value="Open">Open</option>
                 <option value="Closed">Closed</option>
                 <option value="Planned">Planned</option>
-                <option value="Draft">Draft</option>
               </select>
             </div>
 
@@ -354,6 +391,18 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
             </div>
 
             <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Session</label>
               <select
                 value={session}
@@ -365,6 +414,37 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 <option value="New York">New York</option>
                 <option value="Overlap">Overlap</option>
                 <option value="Off-Hours">Off-Hours</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Timeframe</label>
+              <select
+                value={timeframe}
+                onChange={e => setTimeframe(e.target.value)}
+                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
+              >
+                <option value="1m">1m</option>
+                <option value="5m">5m</option>
+                <option value="15m">15m</option>
+                <option value="1h">1h</option>
+                <option value="4h">4h</option>
+                <option value="1D">1D</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Market Condition</label>
+              <select
+                value={marketCondition}
+                onChange={e => setMarketCondition(e.target.value)}
+                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
+              >
+                <option value="Trending">Trending</option>
+                <option value="Ranging">Ranging</option>
+                <option value="Volatile">Volatile</option>
+                <option value="Breakout">Breakout</option>
+                <option value="Reversal">Reversal</option>
               </select>
             </div>
           </div>
@@ -502,7 +582,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         </div>
       )}
 
-      {/* STEP 3: RISK & POSITION SIZING CALCULATOR (Risk percent input removed) */}
+      {/* STEP 3: RISK & POSITION SIZING CALCULATOR */}
       {activeStep === 3 && (
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-4">
           <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Plan & Position Sizing</h3>
@@ -681,7 +761,9 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       {/* STEP 5: REVIEW & SAVE */}
       {activeStep === 5 && (
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-6">
-          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Final Review & Confirmation</h3>
+          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
+            {existingTrade ? 'Review & Update Trade Details' : 'Final Review & Confirmation'}
+          </h3>
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs bg-slate-50 p-4 rounded border border-slate-200">
             <div>
@@ -701,7 +783,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"
-              onClick={() => onNavigate('trades')}
+              onClick={() => existingTrade ? onNavigate('trade-detail', existingTrade.id) : onNavigate('trades')}
               className="px-4 py-2 border border-slate-300 text-slate-700 rounded text-xs font-medium hover:bg-slate-50"
             >
               Cancel
@@ -711,7 +793,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               onClick={handleSaveTrade}
               className="px-5 py-2 bg-slate-900 text-white rounded text-xs font-medium hover:bg-slate-800 shadow-xs"
             >
-              Save as Draft →
+              {existingTrade ? 'Update Trade →' : 'Save as Draft →'}
             </button>
           </div>
         </div>

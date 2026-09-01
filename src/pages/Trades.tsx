@@ -3,6 +3,7 @@ import { useJournal } from '../context/JournalContext';
 import { PageId } from '../components/layout/Sidebar';
 import { Trade } from '../types';
 import { CloseTradeModal } from '../components/common/CloseTradeModal';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 
 interface TradesProps {
   onNavigate: (page: PageId, tradeId?: string) => void;
@@ -14,6 +15,7 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
   const [sortField, setSortField] = useState<keyof Trade | 'netPL' | 'rMultiple' | 'adherencePercent'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [closingTrade, setClosingTrade] = useState<Trade | null>(null);
+  const [deletingTrade, setDeletingTrade] = useState<Trade | null>(null);
 
   // Filter Trades
   const filtered = trades.filter(t => {
@@ -209,8 +211,17 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                             </button>
                           )}
                           <button
-                            onClick={() => deleteTrade(t.id)}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50"
+                            onClick={() => onNavigate('new-trade', t.id)}
+                            className="p-1 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-100 transition-colors"
+                            title="Edit Trade"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setDeletingTrade(t)}
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
                             title="Delete Trade"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,6 +245,23 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
           trade={closingTrade}
           isOpen={true}
           onClose={() => setClosingTrade(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingTrade && (
+        <ConfirmDialog
+          isOpen={!!deletingTrade}
+          onClose={() => setDeletingTrade(null)}
+          onConfirm={async () => {
+            await deleteTrade(deletingTrade.id);
+            setDeletingTrade(null);
+          }}
+          title="Delete Trade Record"
+          message={`Are you sure you want to delete trade record for ${deletingTrade.symbol} (${deletingTrade.date})? This action cannot be undone.`}
+          confirmText="Delete Trade"
+          cancelText="Cancel"
+          isDanger={true}
         />
       )}
     </div>
