@@ -320,9 +320,7 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
 
   const currentStreak = lastOutcome === 'win' ? currentWins : lastOutcome === 'loss' ? -currentLosses : 0;
   const avgAdherencePercent = closedTrades.length > 0 ? totalAdherence / closedTrades.length : 0;
-  const overallQualityScore = (qualityCount > 0 && totalQuality > 0) 
-    ? totalQuality / qualityCount 
-    : (avgAdherencePercent / 10);
+  const overallQualityScore = avgAdherencePercent / 10;
 
   return {
     totalTrades: trades.length,

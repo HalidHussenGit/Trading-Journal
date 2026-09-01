@@ -161,9 +161,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className={`text-lg font-bold font-mono mt-1 ${metrics.totalPL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
             {metrics.totalPL >= 0 ? '+' : ''}${metrics.totalPL.toLocaleString()}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            Total R: <span className="font-mono font-semibold text-slate-700">{metrics.totalR >= 0 ? '+' : ''}{metrics.totalR}R</span>
-          </div>
         </div>
 
         {/* Win Rate */}
@@ -183,9 +180,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="text-lg font-bold font-mono text-slate-900 mt-1">
             {metrics.hasEnoughData ? (metrics.avgR >= 0 ? `1 : ${metrics.avgR || '1.0'}` : `1 : 0`) : 'N/A'}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            Avg R: <span className="font-mono font-semibold text-slate-700">{metrics.avgR >= 0 ? '+' : ''}{metrics.avgR}R</span>
-          </div>
         </div>
 
         {/* Checklist Adherence */}
@@ -193,9 +187,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Checklist Adherence</div>
           <div className="text-lg font-bold font-mono text-slate-900 mt-1">
             {metrics.hasEnoughData ? `${metrics.avgAdherencePercent}%` : 'N/A'}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            Score: <span className="font-semibold text-slate-800">{metrics.hasEnoughData ? `${metrics.overallQualityScore}/10` : 'N/A'}</span>
           </div>
         </div>
 
