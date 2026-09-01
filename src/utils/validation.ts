@@ -22,6 +22,10 @@ export function validateAccount(account: Partial<Account>): ValidationResult {
     errors.push('Default risk percent must be between 0% and 100%.');
   }
 
+  if (account.consistencyRatePercent !== undefined && (account.consistencyRatePercent < 0 || account.consistencyRatePercent > 100)) {
+    errors.push('Consistency rate percent must be between 0% and 100%.');
+  }
+
   if (account.dailyLossLimitPercent !== undefined && (account.dailyLossLimitPercent < 0 || account.dailyLossLimitPercent > 100)) {
     errors.push('Daily loss limit percent must be between 0% and 100%.');
   }

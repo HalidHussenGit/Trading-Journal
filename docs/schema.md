@@ -2,6 +2,35 @@
 
 > Generated from the `public` schema.
 
+## Table: `trade_exits`
+
+**Row Level Security (RLS) Enabled:** false
+
+### Columns
+
+| Column | Type | Nullable |
+|---|---|---|
+| id | uuid | NO |
+| trade_id | uuid | NO |
+| level_name | text | NO |
+| exit_price | numeric | NO |
+| size_percent | numeric | NO |
+| size_quantity | numeric | YES |
+| realized_pl | numeric | YES |
+| realized_r | numeric | YES |
+| exit_reason | text | YES |
+| exit_timestamp | timestamp with time zone | NO |
+
+### Relationships
+
+- `trade_id` references `trades`(`id`)
+
+### RLS Policies
+
+*No policies defined*
+
+---
+
 ## Table: `users`
 
 **Row Level Security (RLS) Enabled:** false
@@ -18,6 +47,10 @@
 ### Relationships
 
 *No foreign keys*
+
+### RLS Policies
+
+*No policies defined*
 
 ---
 
@@ -46,10 +79,15 @@
 | is_archived | boolean | NO |
 | created_at | timestamp with time zone | NO |
 | updated_at | timestamp with time zone | NO |
+| consistency_rate_percent | numeric | YES |
 
 ### Relationships
 
 - `user_id` references `users`(`id`)
+
+### RLS Policies
+
+*No policies defined*
 
 ---
 
@@ -87,6 +125,10 @@
 
 - `user_id` references `users`(`id`)
 
+### RLS Policies
+
+*No policies defined*
+
 ---
 
 ## Table: `setup_checklist_items`
@@ -111,6 +153,10 @@
 
 - `setup_id` references `setups`(`id`)
 
+### RLS Policies
+
+*No policies defined*
+
 ---
 
 ## Table: `tags`
@@ -129,6 +175,10 @@
 ### Relationships
 
 - `user_id` references `users`(`id`)
+
+### RLS Policies
+
+*No policies defined*
 
 ---
 
@@ -212,30 +262,9 @@
 - `account_id` references `accounts`(`id`)
 - `setup_id` references `setups`(`id`)
 
----
+### RLS Policies
 
-## Table: `trade_exits`
-
-**Row Level Security (RLS) Enabled:** false
-
-### Columns
-
-| Column | Type | Nullable |
-|---|---|---|
-| id | uuid | NO |
-| trade_id | uuid | NO |
-| level_name | text | NO |
-| exit_price | numeric | NO |
-| size_percent | numeric | NO |
-| size_quantity | numeric | YES |
-| realized_pl | numeric | YES |
-| realized_r | numeric | YES |
-| exit_reason | text | YES |
-| exit_timestamp | timestamp with time zone | NO |
-
-### Relationships
-
-- `trade_id` references `trades`(`id`)
+*No policies defined*
 
 ---
 
@@ -260,6 +289,10 @@
 
 - `trade_id` references `trades`(`id`)
 
+### RLS Policies
+
+*No policies defined*
+
 ---
 
 ## Table: `trade_timeline_events`
@@ -279,6 +312,10 @@
 ### Relationships
 
 - `trade_id` references `trades`(`id`)
+
+### RLS Policies
+
+*No policies defined*
 
 ---
 
@@ -310,6 +347,10 @@
 ### Relationships
 
 - `user_id` references `users`(`id`)
+
+### RLS Policies
+
+*No policies defined*
 
 ---
 
@@ -345,3 +386,7 @@
 - `default_setup_id` references `setups`(`id`)
 - `user_id` references `users`(`id`)
 - `default_account_id` references `accounts`(`id`)
+
+### RLS Policies
+
+*No policies defined*

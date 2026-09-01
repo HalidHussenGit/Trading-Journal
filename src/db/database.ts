@@ -42,9 +42,10 @@ class SupabaseDatabaseService {
       currency: row.currency || '$',
       initialBalance: Number(row.initial_balance || 0),
       currentBalance: Number(row.current_balance || 0),
-      defaultRiskPercent: Number(row.default_risk_percent || 1.0),
+      defaultRiskPercent: row.default_risk_percent ? Number(row.default_risk_percent) : 1.0,
       dailyLossLimitPercent: Number(row.daily_loss_limit_percent || 0),
       maxDrawdownPercent: Number(row.max_drawdown_percent || 0),
+      consistencyRatePercent: Number(row.consistency_rate_percent || 0),
       tradingStyle: row.trading_style || '',
       status: row.status || 'Active',
       notes: row.notes || '',
@@ -56,6 +57,7 @@ class SupabaseDatabaseService {
 
   async saveAccount(account: Account, userId: string): Promise<Account> {
     const isNew = !isValidUUID(account.id);
+
     const row: Record<string, any> = {
       user_id: userId,
       name: account.name,
@@ -64,28 +66,48 @@ class SupabaseDatabaseService {
       currency: account.currency,
       initial_balance: account.initialBalance,
       current_balance: account.currentBalance,
-      default_risk_percent: account.defaultRiskPercent,
-      daily_loss_limit_percent: account.dailyLossLimitPercent,
-      max_drawdown_percent: account.maxDrawdownPercent,
-      trading_style: account.tradingStyle,
-      status: account.status,
-      notes: account.notes,
+      default_risk_percent: account.defaultRiskPercent ?? 1.0,
+      daily_loss_limit_percent: account.dailyLossLimitPercent ?? 0,
+      max_drawdown_percent: account.maxDrawdownPercent ?? 0,
+      consistency_rate_percent: account.consistencyRatePercent ?? 0,
+      trading_style: account.tradingStyle || '',
+      status: account.status || 'Active',
+      notes: account.notes || '',
       is_archived: account.isArchived || false,
       updated_at: new Date().toISOString()
     };
-    if (!isNew) row.id = account.id;
 
-    const { data, error } = await supabase
-      .from('accounts')
-      .upsert(row)
-      .select('*')
-      .single();
-    if (error) {
-      console.error('Error saving account:', error);
-      throw error;
+    let savedId: string;
+
+    if (isNew) {
+      // INSERT new account — let Supabase generate the UUID
+      const { data, error } = await supabase
+        .from('accounts')
+        .insert(row)
+        .select('id, current_balance')
+        .single();
+
+      if (error) {
+        console.error('Error inserting account:', JSON.stringify(error));
+        throw new Error(error.message || 'Failed to insert account');
+      }
+      savedId = data.id;
+      return { ...account, id: savedId, currentBalance: Number(data.current_balance) };
+    } else {
+      // UPDATE existing account by primary key
+      const { data, error } = await supabase
+        .from('accounts')
+        .update(row)
+        .eq('id', account.id)
+        .select('id, current_balance')
+        .single();
+
+      if (error) {
+        console.error('Error updating account:', JSON.stringify(error));
+        throw new Error(error.message || 'Failed to update account');
+      }
+      return { ...account, id: data.id, currentBalance: Number(data.current_balance) };
     }
-    // Return the persisted account so callers can update state with the real UUID
-    return { ...account, id: data.id, currentBalance: Number(data.current_balance) };
   }
 
   async deleteAccount(id: string): Promise<void> {

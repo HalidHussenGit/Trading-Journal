@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { calculatePortfolioMetrics } from '../utils/calculations';
 
 export const Accounts: React.FC = () => {
-  const { accounts, trades, saveAccount, deleteAccount } = useJournal();
+  const { accounts, trades, saveAccount, deleteAccount, showNotification } = useJournal();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Partial<Account> | null>(null);
@@ -22,7 +22,7 @@ export const Accounts: React.FC = () => {
       currency: '$',
       initialBalance: 10000,
       currentBalance: 10000,
-      defaultRiskPercent: 1.0,
+      consistencyRatePercent: 0,
       dailyLossLimitPercent: 3.0,
       maxDrawdownPercent: 6.0,
       tradingStyle: 'Day Trading',
@@ -43,27 +43,32 @@ export const Accounts: React.FC = () => {
     e.preventDefault();
     if (!editingAccount || !editingAccount.name) return;
 
-    const accToSave: Account = {
-      id: editingAccount.id || '',
-      name: editingAccount.name,
-      brokerOrFirm: editingAccount.brokerOrFirm || '',
-      accountType: (editingAccount.accountType as AccountType) || 'PropFirm',
-      currency: editingAccount.currency || '$',
-      initialBalance: Number(editingAccount.initialBalance) || 0,
-      currentBalance: Number(editingAccount.currentBalance) || Number(editingAccount.initialBalance) || 0,
-      defaultRiskPercent: editingAccount.defaultRiskPercent !== undefined && !isNaN(Number(editingAccount.defaultRiskPercent)) ? Number(editingAccount.defaultRiskPercent) : 1.0,
-      dailyLossLimitPercent: editingAccount.dailyLossLimitPercent !== undefined && !isNaN(Number(editingAccount.dailyLossLimitPercent)) ? Number(editingAccount.dailyLossLimitPercent) : 3.0,
-      maxDrawdownPercent: editingAccount.maxDrawdownPercent !== undefined && !isNaN(Number(editingAccount.maxDrawdownPercent)) ? Number(editingAccount.maxDrawdownPercent) : 6.0,
-      tradingStyle: editingAccount.tradingStyle || '',
-      status: editingAccount.status || 'Active',
-      notes: editingAccount.notes || '',
-      createdAt: editingAccount.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    try {
+      const accToSave: Account = {
+        id: editingAccount.id || '',
+        name: editingAccount.name,
+        brokerOrFirm: editingAccount.brokerOrFirm || '',
+        accountType: (editingAccount.accountType as AccountType) || 'PropFirm',
+        currency: editingAccount.currency || '$',
+        initialBalance: Number(editingAccount.initialBalance) || 0,
+        currentBalance: Number(editingAccount.currentBalance) || Number(editingAccount.initialBalance) || 0,
+        consistencyRatePercent: editingAccount.consistencyRatePercent !== undefined && !isNaN(Number(editingAccount.consistencyRatePercent)) ? Number(editingAccount.consistencyRatePercent) : 0,
+        dailyLossLimitPercent: editingAccount.dailyLossLimitPercent !== undefined && !isNaN(Number(editingAccount.dailyLossLimitPercent)) ? Number(editingAccount.dailyLossLimitPercent) : 3.0,
+        maxDrawdownPercent: editingAccount.maxDrawdownPercent !== undefined && !isNaN(Number(editingAccount.maxDrawdownPercent)) ? Number(editingAccount.maxDrawdownPercent) : 6.0,
+        tradingStyle: editingAccount.tradingStyle || '',
+        status: editingAccount.status || 'Active',
+        notes: editingAccount.notes || '',
+        createdAt: editingAccount.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-    await saveAccount(accToSave);
-    setIsModalOpen(false);
-    setEditingAccount(null);
+      await saveAccount(accToSave);
+      setIsModalOpen(false);
+      setEditingAccount(null);
+      showNotification('success', 'Account saved successfully!');
+    } catch (err: any) {
+      showNotification('error', `Error saving account: ${err.message || 'Database error'}`);
+    }
   };
 
   const selectedAcc = accounts.find(a => a.id === selectedAccountId) || accounts[0];
@@ -169,8 +174,8 @@ export const Accounts: React.FC = () => {
                     <div className="font-semibold text-slate-800">{aMetrics.hasEnoughData ? `${aMetrics.winRate}%` : 'N/A'}</div>
                   </div>
                   <div>
-                    <div className="text-slate-400 text-[10px]">Risk / Trade</div>
-                    <div className="font-semibold text-slate-800">{acc.defaultRiskPercent}%</div>
+                    <div className="text-slate-400 text-[10px]">Consistency</div>
+                    <div className="font-semibold text-slate-800">{acc.consistencyRatePercent ?? 0}%</div>
                   </div>
                 </div>
               </div>
@@ -257,6 +262,7 @@ export const Accounts: React.FC = () => {
                   <option value="PropFirm">Prop Firm</option>
                   <option value="Funded">Funded</option>
                   <option value="Demo">Demo</option>
+                  <option value="Backtest">Backtest</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -276,15 +282,14 @@ export const Accounts: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Default Risk % *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Consistency Rate %</label>
                 <input
                   type="number"
                   step="0.1"
-                  required
-                  value={editingAccount.defaultRiskPercent ?? 0}
+                  value={editingAccount.consistencyRatePercent ?? 0}
                   onChange={e => {
                     const parsed = parseFloat(e.target.value);
-                    setEditingAccount({ ...editingAccount, defaultRiskPercent: isNaN(parsed) ? 0 : parsed });
+                    setEditingAccount({ ...editingAccount, consistencyRatePercent: isNaN(parsed) ? 0 : parsed });
                   }}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none font-mono"
                 />

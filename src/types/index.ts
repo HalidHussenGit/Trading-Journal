@@ -1,4 +1,4 @@
-export type AccountType = 'Personal' | 'PropFirm' | 'Funded' | 'Demo' | 'Other';
+export type AccountType = 'Personal' | 'PropFirm' | 'Funded' | 'Demo' | 'Backtest' | 'Other';
 export type AccountStatus = 'Active' | 'Archived' | 'Closed';
 
 export interface Account {
@@ -9,9 +9,10 @@ export interface Account {
   currency: string;
   initialBalance: number;
   currentBalance: number;
-  defaultRiskPercent: number;
+  defaultRiskPercent?: number;
   dailyLossLimitPercent: number;
   maxDrawdownPercent: number;
+  consistencyRatePercent?: number;
   tradingStyle: string;
   status: AccountStatus;
   notes: string;
