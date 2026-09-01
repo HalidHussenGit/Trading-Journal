@@ -401,7 +401,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Session</label>
               <select
@@ -432,54 +432,9 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 <option value="1D">1D</option>
               </select>
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Market Condition</label>
-              <select
-                value={marketCondition}
-                onChange={e => setMarketCondition(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
-              >
-                <option value="Trending">Trending</option>
-                <option value="Ranging">Ranging</option>
-                <option value="Volatile">Volatile</option>
-                <option value="Breakout">Breakout</option>
-                <option value="Reversal">Reversal</option>
-              </select>
-            </div>
           </div>
 
-          {/* Tags */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Tags</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
-                placeholder="Type tag and press Enter (e.g. A+, High-Vol, News)"
-                className="flex-1 px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded"
-              >
-                Add
-              </button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {tags.map((t, idx) => (
-                  <span key={idx} className="px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded text-[11px] font-mono flex items-center gap-1">
-                    #{t}
-                    <button onClick={() => setTags(tags.filter((_, i) => i !== idx))} className="text-slate-400 hover:text-rose-600">×</button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+
 
           {/* Trade Thesis */}
           <div className="border-t border-slate-100 pt-4">
