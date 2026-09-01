@@ -8,7 +8,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        mono: ['Inter', 'sans-serif'],
         display: ['Outfit', 'sans-serif'],
       },
     },
