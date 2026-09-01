@@ -636,7 +636,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
 
           <div className="space-y-3">
             {exits.map((ex, idx) => (
-              <div key={ex.id || idx} className="grid grid-cols-12 gap-2 items-center p-3 bg-slate-50 rounded border border-slate-200 text-xs">
+              <div key={ex.id || idx} className="grid grid-cols-6 gap-2 items-center p-3 bg-slate-50 rounded border border-slate-200 text-xs">
                 <div className="col-span-2">
                   <label className="text-[10px] text-slate-500 block font-medium">Level Name</label>
                   <input
@@ -664,34 +664,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                     className="w-full px-2 py-1 border rounded text-xs font-mono"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="text-[10px] text-slate-500 block font-medium">Size %</label>
-                  <input
-                    type="number"
-                    step="1"
-                    value={ex.sizePercent}
-                    onChange={e => {
-                      const updated = [...exits];
-                      updated[idx].sizePercent = parseFloat(e.target.value) || 0;
-                      setExits(updated);
-                    }}
-                    className="w-full px-2 py-1 border rounded text-xs font-mono"
-                  />
-                </div>
-                <div className="col-span-4">
-                  <label className="text-[10px] text-slate-500 block font-medium">Realized P&L ($)</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={ex.realizedPL}
-                    onChange={e => {
-                      const updated = [...exits];
-                      updated[idx].realizedPL = parseFloat(e.target.value) || 0;
-                      setExits(updated);
-                    }}
-                    className="w-full px-2 py-1 border rounded text-xs font-mono"
-                  />
-                </div>
                 <div className="col-span-1 text-right">
                   <button
                     type="button"
@@ -707,7 +679,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
 
           <div className="p-3 bg-slate-100 rounded border border-slate-200 flex items-center justify-between text-xs font-mono">
             <div>Weighted Exit Price: <strong className="text-slate-900">{exitCalc.weightedExitPrice}</strong></div>
-            <div>Total Realized P&L: <strong className={exitCalc.totalRealizedPL >= 0 ? 'text-emerald-600' : 'text-rose-600'}>${exitCalc.totalRealizedPL}</strong></div>
             <div>Total R: <strong className="text-slate-900">{exitCalc.totalRealizedR}R</strong></div>
           </div>
         </div>
