@@ -155,8 +155,14 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                 {sorted.map(t => {
                   const acc = accounts.find(a => a.id === t.accountId);
                   const stp = setups.find(s => s.id === t.setupId);
-                  const isWin = t.result?.netPL > 0;
-                  const isLoss = t.result?.netPL < 0;
+                  const outcome = t.result?.status;
+                  const isWin       = outcome === 'Win';
+                  const isPartialWin = outcome === 'Partial Win';
+                  const isLoss      = outcome === 'Loss';
+                  const isBreakeven = outcome === 'Breakeven';
+                  // colour helpers
+                  const plPositive = t.result?.netPL > 0;
+                  const plNegative = t.result?.netPL < 0;
 
                   return (
                     <tr
@@ -169,9 +175,13 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                       </td>
                       <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
-                          t.status === 'Closed' ? 'bg-emerald-100 text-emerald-800' :
-                          t.status === 'Draft'  ? 'bg-amber-100 text-amber-800 border border-amber-300' :
-                          t.status === 'Open'   ? 'bg-blue-100 text-blue-800' :
+                          t.status === 'Closed' && isWin        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                          t.status === 'Closed' && isPartialWin ? 'bg-teal-100 text-teal-700 border border-teal-200' :
+                          t.status === 'Closed' && isLoss       ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+                          t.status === 'Closed' && isBreakeven  ? 'bg-slate-100 text-slate-600 border border-slate-300' :
+                          t.status === 'Closed'                 ? 'bg-emerald-100 text-emerald-800' :
+                          t.status === 'Draft'                  ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                          t.status === 'Open'                   ? 'bg-blue-100 text-blue-800' :
                           'bg-slate-100 text-slate-600'
                         }`}>
                           {t.status}
@@ -186,11 +196,11 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-600 font-mono">{t.planned?.entry}</td>
-                      <td className={`py-3 px-4 font-bold font-mono ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-400'}`}>
-                        {t.status === 'Closed' ? `${isWin ? '+' : ''}$${t.result?.netPL}` : <span className="text-slate-300 text-[10px]">—</span>}
+                      <td className={`py-3 px-4 font-bold font-mono ${plPositive ? 'text-emerald-600' : plNegative ? 'text-rose-600' : 'text-slate-400'}`}>
+                        {t.status === 'Closed' ? `${plPositive ? '+' : ''}$${t.result?.netPL}` : <span className="text-slate-300 text-[10px]">—</span>}
                       </td>
-                      <td className={`py-3 px-4 font-bold font-mono ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-400'}`}>
-                        {t.status === 'Closed' ? `${isWin ? '+' : ''}${t.result?.rMultiple}R` : <span className="text-slate-300 text-[10px]">—</span>}
+                      <td className={`py-3 px-4 font-bold font-mono ${plPositive ? 'text-emerald-600' : plNegative ? 'text-rose-600' : 'text-slate-400'}`}>
+                        {t.status === 'Closed' ? `${plPositive ? '+' : ''}${t.result?.rMultiple}R` : <span className="text-slate-300 text-[10px]">—</span>}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
@@ -202,12 +212,14 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                       <td className="py-3 px-4 text-right font-sans" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {t.status === 'Closed' ? (
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
-                              isWin ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 
-                              isLoss ? 'bg-rose-100 text-rose-800 border border-rose-200' : 
+                            <span className={`inline-flex items-center justify-center min-w-[64px] px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide leading-tight text-center ${
+                              isWin        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                              isLoss       ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+                              isPartialWin ? 'bg-teal-100 text-teal-700 border border-teal-200' :
+                              isBreakeven  ? 'bg-slate-100 text-slate-600 border border-slate-300' :
                               'bg-slate-100 text-slate-600 border border-slate-200'
                             }`}>
-                              {t.result?.status || 'Closed'}
+                              {outcome || 'Closed'}
                             </span>
                           ) : (
                             <button
