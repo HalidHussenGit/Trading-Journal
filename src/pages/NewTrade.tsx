@@ -34,7 +34,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const [entryPrice, setEntryPrice] = useState<number>(existingTrade?.planned?.entry || 1.0850);
   const [stopLossPrice, setStopLossPrice] = useState<number>(existingTrade?.planned?.stopLoss || 1.0830);
   const [takeProfitPrice, setTakeProfitPrice] = useState<number>(existingTrade?.planned?.takeProfit || 1.0910);
-  const [lotSize, setLotSize] = useState<number>(existingTrade?.planned?.lotSize || 0);
+  const [lotSizeStr, setLotSizeStr] = useState<string>(existingTrade?.planned?.lotSize?.toString() || '');
   const riskPercent = existingTrade?.planned?.riskPercent || settings.defaultRiskPercent || 1.0;
 
   // Partial Exits
@@ -73,7 +73,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       setEntryPrice(existingTrade.planned?.entry || 1.0850);
       setStopLossPrice(existingTrade.planned?.stopLoss || 1.0830);
       setTakeProfitPrice(existingTrade.planned?.takeProfit || 1.0910);
-      setLotSize(existingTrade.planned?.lotSize || 0);
+      setLotSizeStr(existingTrade.planned?.lotSize?.toString() || '');
       setExits(existingTrade.exits && existingTrade.exits.length > 0 ? existingTrade.exits : [
         { id: '', levelName: 'TP1', exitPrice: existingTrade.planned?.takeProfit || 1.0910, sizePercent: 100, realizedPL: 0, realizedR: 0, exitReason: 'Target Reached', timestamp: new Date().toISOString() }
       ]);
@@ -202,14 +202,14 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         riskAmount: riskCalc.riskAmount,
         plannedRR: riskCalc.plannedRR,
         positionSize: riskCalc.positionSize,
-        lotSize: lotSize > 0 ? lotSize : undefined
+        lotSize: parseFloat(lotSizeStr) > 0 ? parseFloat(lotSizeStr) : undefined
       },
 
       actual: existingTrade?.actual || {
         entry: entryPrice,
         exit: 0,
         positionSize: riskCalc.positionSize,
-        lotSize: lotSize > 0 ? lotSize : undefined,
+        lotSize: parseFloat(lotSizeStr) > 0 ? parseFloat(lotSizeStr) : undefined,
         fees: 0,
         commission: 0,
         swap: 0,
@@ -588,8 +588,8 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               <input
                 type="number"
                 step="any"
-                value={lotSize || ''}
-                onChange={e => setLotSize(parseFloat(e.target.value) || 0)}
+                value={lotSizeStr}
+                onChange={e => setLotSizeStr(e.target.value)}
                 placeholder="e.g. 1.0"
                 className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
               />
