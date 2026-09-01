@@ -51,7 +51,7 @@ export const Accounts: React.FC = () => {
         accountType: (editingAccount.accountType as AccountType) || 'PropFirm',
         currency: editingAccount.currency || '$',
         initialBalance: Number(editingAccount.initialBalance) || 0,
-        currentBalance: Number(editingAccount.currentBalance) || Number(editingAccount.initialBalance) || 0,
+        currentBalance: (Number(editingAccount.initialBalance) || 0) + (editingAccount.id ? calculatePortfolioMetrics(trades.filter(t => t.accountId === editingAccount.id), Number(editingAccount.initialBalance) || 0).totalPL : 0),
         consistencyRatePercent: editingAccount.consistencyRatePercent !== undefined && !isNaN(Number(editingAccount.consistencyRatePercent)) ? Number(editingAccount.consistencyRatePercent) : 0,
         dailyLossLimitPercent: editingAccount.dailyLossLimitPercent !== undefined && !isNaN(Number(editingAccount.dailyLossLimitPercent)) ? Number(editingAccount.dailyLossLimitPercent) : 3.0,
         maxDrawdownPercent: editingAccount.maxDrawdownPercent !== undefined && !isNaN(Number(editingAccount.maxDrawdownPercent)) ? Number(editingAccount.maxDrawdownPercent) : 6.0,
@@ -116,7 +116,7 @@ export const Accounts: React.FC = () => {
                 key={acc.id}
                 onClick={() => setSelectedAccountId(acc.id)}
                 className={`bg-white p-5 rounded-lg border cursor-pointer transition-all ${
-                  isSelected ? 'border-slate-900 ring-1 ring-slate-900 shadow-sm' : 'border-slate-200 hover:border-slate-300'
+                  isSelected ? 'border-slate-400 ring-1 ring-slate-300 shadow-md' : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -153,7 +153,7 @@ export const Accounts: React.FC = () => {
                   <div>
                     <div className="text-[10px] text-slate-400 uppercase font-medium">Balance</div>
                     <div className="text-base font-bold font-mono text-slate-900">
-                      {acc.currency}{acc.currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {acc.currency}{(acc.initialBalance + totalPL).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                   <div className="text-right">

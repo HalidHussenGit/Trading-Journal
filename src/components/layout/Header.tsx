@@ -2,6 +2,7 @@ import React from 'react';
 import { useJournal } from '../../context/JournalContext';
 import { AutosaveBadge } from '../common/AutosaveBadge';
 import { PageId } from './Sidebar';
+import { calculatePortfolioMetrics } from '../../utils/calculations';
 
 interface HeaderProps {
   onNavigate: (page: PageId) => void;
@@ -9,7 +10,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
-  const { currentUser, logout, accounts, filters, setFilters, autosaveStatus, notification } = useJournal();
+  const { currentUser, logout, accounts, trades, filters, setFilters, autosaveStatus, notification } = useJournal();
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-40 shadow-xs">
@@ -29,11 +30,15 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
             className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
           >
             <option value="ALL">All Accounts ({accounts.length})</option>
-            {accounts.map(acc => (
-              <option key={acc.id} value={acc.id}>
-                {acc.name} ({acc.currency}{acc.currentBalance.toLocaleString()})
-              </option>
-            ))}
+            {accounts.map(acc => {
+              const accTrades = trades.filter(t => t.accountId === acc.id);
+              const totalPL = calculatePortfolioMetrics(accTrades, acc.initialBalance).totalPL || 0;
+              return (
+                <option key={acc.id} value={acc.id}>
+                  {acc.name} ({acc.currency}{(acc.initialBalance + totalPL).toLocaleString()})
+                </option>
+              );
+            })}
           </select>
         </div>
 
