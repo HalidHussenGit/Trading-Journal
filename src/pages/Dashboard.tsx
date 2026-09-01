@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useJournal } from '../context/JournalContext';
 import { calculatePortfolioMetrics, calculateAdherenceBuckets } from '../utils/calculations';
 import { EquityCurveChart, DailyPLBarChart, RMultipleDistributionChart } from '../components/common/Charts';
 import { PageId } from '../components/layout/Sidebar';
+import { CloseTradeModal } from '../components/common/CloseTradeModal';
+import { Trade } from '../types';
 
 interface DashboardProps {
   onNavigate: (page: PageId, tradeId?: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = () => {
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const { trades, accounts, setups, filters, setFilters } = useJournal();
+  const [closingTrade, setClosingTrade] = useState<Trade | null>(null);
+
 
   // Filter trades based on active header filters
   const filteredTrades = trades.filter(t => {
@@ -59,7 +63,50 @@ export const Dashboard: React.FC<DashboardProps> = () => {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
+
+      {/* Draft Trades Alert Panel */}
+      {(() => {
+        const draftTrades = trades.filter(t => t.status !== 'Closed' && !t.isArchived);
+        if (draftTrades.length === 0) return null;
+        return (
+          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-600 text-sm">⏳</span>
+                <span className="text-sm font-bold text-amber-900">
+                  {draftTrades.length} trade{draftTrades.length > 1 ? 's' : ''} need closing
+                </span>
+              </div>
+              <button
+                onClick={() => onNavigate('trades')}
+                className="text-xs text-amber-700 underline font-medium hover:text-amber-900"
+              >
+                View all →
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {draftTrades.slice(0, 4).map(t => (
+                <div key={t.id} className="flex items-center justify-between bg-white rounded border border-amber-200 px-3 py-1.5 text-xs">
+                  <span className="font-mono font-bold text-slate-900">{t.symbol}</span>
+                  <span className="text-slate-500">{t.date} · {t.direction} · Entry {t.planned?.entry}</span>
+                  <button
+                    onClick={() => setClosingTrade(t)}
+                    className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800"
+                  >
+                    Close
+                  </button>
+                </div>
+              ))}
+              {draftTrades.length > 4 && (
+                <div className="text-xs text-amber-600 text-center">+{draftTrades.length - 4} more…</div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Global Filter Bar */}
+
       <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="text-xs font-semibold text-slate-700">Filter Overview:</div>
@@ -228,6 +275,14 @@ export const Dashboard: React.FC<DashboardProps> = () => {
           )}
         </div>
       </div>
+      {/* Close Trade Modal */}
+      {closingTrade && (
+        <CloseTradeModal
+          trade={closingTrade}
+          isOpen={true}
+          onClose={() => setClosingTrade(null)}
+        />
+      )}
     </div>
   );
 };

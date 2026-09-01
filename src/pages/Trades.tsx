@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useJournal } from '../context/JournalContext';
 import { PageId } from '../components/layout/Sidebar';
 import { Trade } from '../types';
+import { CloseTradeModal } from '../components/common/CloseTradeModal';
 
 interface TradesProps {
   onNavigate: (page: PageId, tradeId?: string) => void;
@@ -12,6 +13,7 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
   
   const [sortField, setSortField] = useState<keyof Trade | 'netPL' | 'rMultiple' | 'adherencePercent'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [closingTrade, setClosingTrade] = useState<Trade | null>(null);
 
   // Filter Trades
   const filtered = trades.filter(t => {
@@ -135,6 +137,7 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[10px] tracking-wider select-none">
                 <tr>
                   <th className="py-3 px-4 cursor-pointer hover:text-slate-900" onClick={() => handleSort('date')}>Date & Time</th>
+                  <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Account</th>
                   <th className="py-3 px-4">Setup</th>
                   <th className="py-3 px-4 cursor-pointer hover:text-slate-900" onClick={() => handleSort('symbol')}>Symbol</th>
@@ -143,8 +146,6 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                   <th className="py-3 px-4 cursor-pointer hover:text-slate-900" onClick={() => handleSort('netPL')}>Net P&L</th>
                   <th className="py-3 px-4 cursor-pointer hover:text-slate-900" onClick={() => handleSort('rMultiple')}>Realized R</th>
                   <th className="py-3 px-4 cursor-pointer hover:text-slate-900" onClick={() => handleSort('adherencePercent')}>Adherence</th>
-                  <th className="py-3 px-4">Emotion</th>
-                  <th className="py-3 px-4">Quality</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -164,20 +165,30 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                       <td className="py-3 px-4 font-sans font-medium text-slate-900 whitespace-nowrap">
                         {t.date} <span className="text-[10px] text-slate-400 font-mono">{t.time}</span>
                       </td>
+                      <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
+                          t.status === 'Closed' ? 'bg-emerald-100 text-emerald-800' :
+                          t.status === 'Draft'  ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                          t.status === 'Open'   ? 'bg-blue-100 text-blue-800' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {t.status}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 font-sans text-slate-600 truncate max-w-[120px]">{acc?.name || 'Main'}</td>
                       <td className="py-3 px-4 font-sans text-slate-600 truncate max-w-[130px]">{stp?.name || 'General'}</td>
-                      <td className="py-3 px-4 font-bold text-slate-900">{t.symbol}</td>
+                      <td className="py-3 px-4 font-bold text-slate-900 font-mono">{t.symbol}</td>
                       <td className="py-3 px-4">
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${t.direction === 'Long' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                           {t.direction}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-slate-600">{t.planned?.entry}</td>
-                      <td className={`py-3 px-4 font-bold ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-600'}`}>
-                        {t.status === 'Closed' ? `${isWin ? '+' : ''}$${t.result?.netPL}` : <span className="text-slate-400 text-[10px] uppercase">{t.status}</span>}
+                      <td className="py-3 px-4 text-slate-600 font-mono">{t.planned?.entry}</td>
+                      <td className={`py-3 px-4 font-bold font-mono ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-400'}`}>
+                        {t.status === 'Closed' ? `${isWin ? '+' : ''}$${t.result?.netPL}` : <span className="text-slate-300 text-[10px]">—</span>}
                       </td>
-                      <td className={`py-3 px-4 font-bold ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-600'}`}>
-                        {t.status === 'Closed' ? `${isWin ? '+' : ''}${t.result?.rMultiple}R` : '-'}
+                      <td className={`py-3 px-4 font-bold font-mono ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-400'}`}>
+                        {t.status === 'Closed' ? `${isWin ? '+' : ''}${t.result?.rMultiple}R` : <span className="text-slate-300 text-[10px]">—</span>}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
@@ -186,18 +197,27 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                           {t.checklistSnapshot?.adherencePercent ?? 100}%
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-sans text-slate-600">{t.psychology?.preTradeEmotion || 'Calm'}</td>
-                      <td className="py-3 px-4 font-bold text-slate-800">{t.qualityScores?.overall || 8}/10</td>
                       <td className="py-3 px-4 text-right font-sans" onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={() => deleteTrade(t.id)}
-                          className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50"
-                          title="Delete Trade"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          {t.status !== 'Closed' && (
+                            <button
+                              onClick={() => setClosingTrade(t)}
+                              className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800 transition-colors"
+                              title="Close Trade"
+                            >
+                              Close
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteTrade(t.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50"
+                            title="Delete Trade"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -206,6 +226,15 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Close Trade Modal */}
+      {closingTrade && (
+        <CloseTradeModal
+          trade={closingTrade}
+          isOpen={true}
+          onClose={() => setClosingTrade(null)}
+        />
       )}
     </div>
   );

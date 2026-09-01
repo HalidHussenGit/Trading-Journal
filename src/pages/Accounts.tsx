@@ -15,7 +15,7 @@ export const Accounts: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingAccount({
-      id: `acc_${Date.now()}`,
+      id: '',
       name: '',
       brokerOrFirm: '',
       accountType: 'PropFirm',
@@ -44,7 +44,7 @@ export const Accounts: React.FC = () => {
     if (!editingAccount || !editingAccount.name) return;
 
     const accToSave: Account = {
-      id: editingAccount.id || `acc_${Date.now()}`,
+      id: editingAccount.id || '',
       name: editingAccount.name,
       brokerOrFirm: editingAccount.brokerOrFirm || '',
       accountType: (editingAccount.accountType as AccountType) || 'PropFirm',

@@ -16,7 +16,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const [activeStep, setActiveStep] = useState<number>(1);
 
   // Form State
-  const [tradeId] = useState<string>(existingTrade?.id || `trade_${Date.now()}`);
+  const [tradeId] = useState<string>(existingTrade?.id || '');
   const [accountId, setAccountId] = useState<string>(existingTrade?.accountId || accounts[0]?.id || '');
   const [setupId, setSetupId] = useState<string>(existingTrade?.setupId || setups[0]?.id || '');
   const [symbol, setSymbol] = useState<string>(existingTrade?.symbol || 'EURUSD');
@@ -38,7 +38,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
 
   // Partial Exits
   const [exits, setExits] = useState<TradeExit[]>(existingTrade?.exits || [
-    { id: 'exit_1', levelName: 'TP1', exitPrice: 1.0910, sizePercent: 100, realizedPL: 0, realizedR: 0, exitReason: 'Target Reached', timestamp: new Date().toISOString() }
+    { id: '', levelName: 'TP1', exitPrice: 1.0910, sizePercent: 100, realizedPL: 0, realizedR: 0, exitReason: 'Target Reached', timestamp: new Date().toISOString() }
   ]);
 
   // Checklist Snapshot State
@@ -110,7 +110,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       const file = e.target.files[0];
       const previewUrl = URL.createObjectURL(file);
       setScreenshot({
-        id: `img_${Date.now()}`,
+        id: '',
         category: 'Before Entry',
         caption: file.name,
         file,
@@ -119,9 +119,10 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     }
   };
 
-  // Save Trade Execution
-  const handleSaveTrade = async (isDraft: boolean = false) => {
-    // Save single screenshot blob to IndexedDB if present
+  // Save Trade Execution — always saves as Draft.
+  // Users close trades (set outcome, P&L, R) via the Close Trade modal
+  // accessible from the Trades list and Calendar page.
+  const handleSaveTrade = async () => {
     const savedScreenshots: TradeScreenshot[] = [];
     if (screenshot) {
       const storageKey = screenshot.id;
@@ -139,17 +140,13 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       });
     }
 
-    const tradeOutcome = status === 'Closed'
-      ? (exitCalc.totalRealizedPL > 0 ? 'Win' : exitCalc.totalRealizedPL < 0 ? 'Loss' : 'Breakeven')
-      : 'Custom';
-
     const newTradeRecord: Trade = {
       id: tradeId,
       accountId,
       setupId,
       symbol: symbol.toUpperCase().trim(),
       direction,
-      status: isDraft ? 'Draft' : status,
+      status: 'Draft',
       date,
       time,
       session,
@@ -169,22 +166,22 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
 
       actual: {
         entry: entryPrice,
-        exit: exitCalc.weightedExitPrice || entryPrice,
+        exit: 0,
         positionSize: riskCalc.positionSize,
         fees: 0,
         commission: 0,
         swap: 0,
         slippage: 0,
-        exitReason: exits[0]?.exitReason || ''
+        exitReason: ''
       },
 
       exits,
 
       result: {
-        status: tradeOutcome,
-        netPL: status === 'Closed' ? exitCalc.totalRealizedPL : 0,
-        grossPL: status === 'Closed' ? exitCalc.totalRealizedPL : 0,
-        rMultiple: status === 'Closed' ? exitCalc.totalRealizedR : 0
+        status: 'Custom',
+        netPL: 0,
+        grossPL: 0,
+        rMultiple: 0
       },
 
       checklistSnapshot: {
@@ -229,22 +226,21 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       },
 
       timeline: [
-        { id: `t1`, timestamp: new Date().toISOString(), type: 'Created', description: 'Trade logged in system' },
-        ...(status === 'Closed' ? [{ id: `t2`, timestamp: new Date().toISOString(), type: 'Closed' as const, description: `Trade closed with ${exitCalc.totalRealizedPL >= 0 ? '+' : ''}$${exitCalc.totalRealizedPL}` }] : [])
+        { id: '', timestamp: new Date().toISOString(), type: 'Created', description: 'Trade logged as Draft' }
       ],
 
       createdAt: existingTrade?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
-    const validation = validateTrade(newTradeRecord, isDraft);
+    const validation = validateTrade(newTradeRecord, true);
     if (!validation.isValid) {
       showNotification('error', `Validation error: ${validation.errors.join(' ')}`);
       return;
     }
 
     await saveTrade(newTradeRecord);
-    onNavigate('calendar');
+    onNavigate('trades');
   };
 
   return (
@@ -581,7 +577,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               type="button"
               onClick={() => {
                 const newExit: TradeExit = {
-                  id: `exit_${Date.now()}`,
+                  id: '',
                   levelName: `TP${exits.length + 1}`,
                   exitPrice: takeProfitPrice,
                   sizePercent: 50,
@@ -700,17 +696,17 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"
-              onClick={() => handleSaveTrade(true)}
+              onClick={() => onNavigate('trades')}
               className="px-4 py-2 border border-slate-300 text-slate-700 rounded text-xs font-medium hover:bg-slate-50"
             >
-              Save as Draft
+              Cancel
             </button>
             <button
               type="button"
-              onClick={() => handleSaveTrade(false)}
+              onClick={handleSaveTrade}
               className="px-5 py-2 bg-slate-900 text-white rounded text-xs font-medium hover:bg-slate-800 shadow-xs"
             >
-              Log & Save Trade
+              Save as Draft →
             </button>
           </div>
         </div>

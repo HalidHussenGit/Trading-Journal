@@ -171,18 +171,18 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveAccount(account, currentUser.id);
+      const saved = await dbService.saveAccount(account, currentUser.id);
       setAccounts(prev => {
-        const idx = prev.findIndex(a => a.id === account.id);
+        const idx = prev.findIndex(a => a.id === account.id || a.id === saved.id);
         if (idx >= 0) {
           const updated = [...prev];
-          updated[idx] = account;
+          updated[idx] = saved;
           return updated;
         }
-        return [...prev, account];
+        return [...prev, saved];
       });
       setAutosaveStatus('Saved');
-      showNotification('success', `Account "${account.name}" saved.`);
+      showNotification('success', `Account "${saved.name}" saved.`);
     } catch (err: any) {
       setAutosaveStatus('Save failed');
       showNotification('error', `Save error: ${err.message}`);
@@ -207,18 +207,18 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveSetup(setup, currentUser.id);
+      const saved = await dbService.saveSetup(setup, currentUser.id);
       setSetups(prev => {
-        const idx = prev.findIndex(s => s.id === setup.id);
+        const idx = prev.findIndex(s => s.id === setup.id || s.id === saved.id);
         if (idx >= 0) {
           const updated = [...prev];
-          updated[idx] = setup;
+          updated[idx] = saved;
           return updated;
         }
-        return [...prev, setup];
+        return [...prev, saved];
       });
       setAutosaveStatus('Saved');
-      showNotification('success', `Setup "${setup.name}" saved.`);
+      showNotification('success', `Setup "${saved.name}" saved.`);
     } catch (err: any) {
       setAutosaveStatus('Save failed');
       showNotification('error', `Save error: ${err.message}`);
@@ -243,15 +243,15 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveTrade(trade, currentUser.id);
+      const saved = await dbService.saveTrade(trade, currentUser.id);
       setTrades(prev => {
-        const idx = prev.findIndex(t => t.id === trade.id);
+        const idx = prev.findIndex(t => t.id === trade.id || t.id === saved.id);
         if (idx >= 0) {
           const updated = [...prev];
-          updated[idx] = trade;
+          updated[idx] = saved;
           return updated;
         }
-        return [trade, ...prev];
+        return [saved, ...prev];
       });
 
       // Refetch accounts to display auto-recalculated current_balance from Postgres trigger
@@ -261,7 +261,7 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
 
       setAutosaveStatus('Saved');
-      showNotification('success', `Trade #${trade.id} saved.`);
+      showNotification('success', `Trade saved.`);
     } catch (err: any) {
       setAutosaveStatus('Save failed');
       showNotification('error', `Trade save error: ${err.message}`);

@@ -14,7 +14,7 @@ export const Setups: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingSetup({
-      id: `setup_${Date.now()}`,
+      id: '',
       name: '',
       description: '',
       market: 'Forex',
@@ -30,10 +30,10 @@ export const Setups: React.FC = () => {
       rules: [],
       invalidConditions: [],
       checklist: [
-        { id: `chk_1`, setupId: '', name: 'Higher Timeframe Trend Aligned', description: 'Direction matches 4h/Daily bias', required: true, order: 1, active: true, createdAt: '', updatedAt: '' },
-        { id: `chk_2`, setupId: '', name: 'Key Support / Resistance Level Hit', description: 'Price reacting to HTF level', required: true, order: 2, active: true, createdAt: '', updatedAt: '' },
-        { id: `chk_3`, setupId: '', name: 'Liquidity Sweep Confirmed', description: 'Asian/London High or Low swept', required: false, order: 3, active: true, createdAt: '', updatedAt: '' },
-        { id: `chk_4`, setupId: '', name: 'Market Structure Shift on LTF', description: '1m/5m MS break with displacement', required: true, order: 4, active: true, createdAt: '', updatedAt: '' }
+        { id: '', setupId: '', name: 'Higher Timeframe Trend Aligned', description: 'Direction matches 4h/Daily bias', required: true, order: 1, active: true, createdAt: '', updatedAt: '' },
+        { id: '', setupId: '', name: 'Key Support / Resistance Level Hit', description: 'Price reacting to HTF level', required: true, order: 2, active: true, createdAt: '', updatedAt: '' },
+        { id: '', setupId: '', name: 'Liquidity Sweep Confirmed', description: 'Asian/London High or Low swept', required: false, order: 3, active: true, createdAt: '', updatedAt: '' },
+        { id: '', setupId: '', name: 'Market Structure Shift on LTF', description: '1m/5m MS break with displacement', required: true, order: 4, active: true, createdAt: '', updatedAt: '' }
       ],
       notes: '',
       status: 'Active',
@@ -54,7 +54,7 @@ export const Setups: React.FC = () => {
     if (!editingSetup) return;
     const currentList = editingSetup.checklist || [];
     const newItem: SetupChecklistItem = {
-      id: `chk_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      id: '',
       setupId: editingSetup.id || '',
       name: '',
       description: '',
@@ -88,7 +88,7 @@ export const Setups: React.FC = () => {
     if (!editingSetup || !editingSetup.name) return;
 
     const setupToSave: Setup = {
-      id: editingSetup.id || `setup_${Date.now()}`,
+      id: editingSetup.id || '',
       name: editingSetup.name,
       description: editingSetup.description || '',
       market: editingSetup.market || 'Forex',

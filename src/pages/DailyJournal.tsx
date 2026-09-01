@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useJournal } from '../context/JournalContext';
-import { TradingDay, NoTradeReason } from '../types';
+import { TradingDay, NoTradeReason, Trade } from '../types';
 import { Modal } from '../components/common/Modal';
+import { CloseTradeModal } from '../components/common/CloseTradeModal';
 
 export const DailyJournal: React.FC = () => {
   const { tradingDays, trades, saveDayLog } = useJournal();
@@ -9,6 +10,7 @@ export const DailyJournal: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDay, setSelectedDay] = useState<TradingDay | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [closingTrade, setClosingTrade] = useState<Trade | null>(null);
 
   // Month navigation helpers
   const year = currentMonth.getFullYear();
@@ -185,11 +187,13 @@ export const DailyJournal: React.FC = () => {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
             
             const dayTrades = trades.filter(t => t.date === dateStr && t.status === 'Closed');
+            const draftTrades = trades.filter(t => t.date === dateStr && t.status !== 'Closed');
             const dayPL = dayTrades.reduce((acc, t) => acc + (t.result?.netPL || 0), 0);
             const dayR = dayTrades.reduce((acc, t) => acc + (t.result?.rMultiple || 0), 0);
             const logEntry = tradingDays.find(d => d.date === dateStr);
 
             const didTrade = dayTrades.length > 0;
+            const hasDraft = draftTrades.length > 0;
             const isProfit = dayPL > 0;
             const isLoss = dayPL < 0;
 
@@ -201,11 +205,16 @@ export const DailyJournal: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-700 font-mono">{dayNum}</span>
-                  {logEntry && !didTrade && logEntry.noTradeReason && (
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                      No Trade
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {hasDraft && (
+                      <span className="w-2 h-2 rounded-full bg-amber-400 border border-amber-600" title={`${draftTrades.length} draft trade(s)`} />
+                    )}
+                    {logEntry && !didTrade && !hasDraft && logEntry.noTradeReason && (
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                        No Trade
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {didTrade ? (
@@ -214,10 +223,15 @@ export const DailyJournal: React.FC = () => {
                     isLoss ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-slate-100 text-slate-800 border-slate-200'
                   }`}>
                     <div className="font-bold flex items-center justify-between">
-                      <span>{dayTrades.length} trade{dayTrades.length > 1 ? 's' : ''}</span>
+                      <span>{dayTrades.length} closed</span>
                       <span>{isProfit ? '+' : ''}${dayPL}</span>
                     </div>
                     <div className="text-[10px] opacity-80">{isProfit ? '+' : ''}{dayR}R</div>
+                  </div>
+                ) : hasDraft ? (
+                  <div className="p-2 rounded border border-amber-200 bg-amber-50 text-xs font-mono">
+                    <div className="font-bold text-amber-800">{draftTrades.length} open</div>
+                    <div className="text-[10px] text-amber-600">Needs closing</div>
                   </div>
                 ) : (
                   <div className="text-[11px] text-slate-400 font-mono italic">
@@ -238,6 +252,40 @@ export const DailyJournal: React.FC = () => {
           title={`Daily Journal — ${selectedDay.date}`}
         >
           <form onSubmit={handleSaveDayLog} className="space-y-4">
+            {/* Day Trades Summary */}
+            {(() => {
+              const dayAllTrades = trades.filter(t => t.date === selectedDay.date);
+              return dayAllTrades.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-slate-700">Trades this day</div>
+                  {dayAllTrades.map(t => {
+                    const isClosed = t.status === 'Closed';
+                    const isWin = (t.result?.netPL || 0) > 0;
+                    const isLoss = (t.result?.netPL || 0) < 0;
+                    return (
+                      <div key={t.id} className="flex items-center justify-between bg-slate-50 rounded border border-slate-200 px-3 py-2 text-xs">
+                        <div className="font-mono font-bold text-slate-900">{t.symbol}</div>
+                        <div className="text-slate-500">{t.direction} · {t.session}</div>
+                        {isClosed ? (
+                          <span className={`font-mono font-bold ${ isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-500' }`}>
+                            {isWin ? '+' : ''}${t.result?.netPL} ({isWin ? '+' : ''}{t.result?.rMultiple}R)
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => { setIsModalOpen(false); setClosingTrade(t); }}
+                            className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800"
+                          >
+                            Close Trade
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null;
+            })()}
+
             <div className="flex items-center gap-4 bg-slate-50 p-3 rounded border border-slate-200 text-xs">
               <label className="flex items-center gap-2 font-semibold text-slate-800 cursor-pointer">
                 <input
@@ -308,6 +356,15 @@ export const DailyJournal: React.FC = () => {
             </div>
           </form>
         </Modal>
+      )}
+
+      {/* Close Trade Modal (opened from calendar day) */}
+      {closingTrade && (
+        <CloseTradeModal
+          trade={closingTrade}
+          isOpen={true}
+          onClose={() => setClosingTrade(null)}
+        />
       )}
     </div>
   );

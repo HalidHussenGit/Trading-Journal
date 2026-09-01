@@ -1,6 +1,13 @@
 import { supabase } from './supabaseClient';
 import { Account, Setup, Trade, TradingDay, Tag, Settings, SetupChecklistItem } from '../types';
 
+// UUID v4 regex — used to distinguish Postgres-generated UUIDs from old
+// IndexedDB-era strings like "acc_1234567" or "chk_1". When an id fails
+// this check it means the entity is new and id must be omitted so Postgres
+// can assign gen_random_uuid().
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isValidUUID = (v: string | undefined | null): boolean => !!v && UUID_RE.test(v);
+
 export interface AppDatabaseData {
   accounts: Account[];
   setups: Setup[];
@@ -47,9 +54,9 @@ class SupabaseDatabaseService {
     }));
   }
 
-  async saveAccount(account: Account, userId: string): Promise<void> {
-    const row = {
-      id: account.id,
+  async saveAccount(account: Account, userId: string): Promise<Account> {
+    const isNew = !isValidUUID(account.id);
+    const row: Record<string, any> = {
       user_id: userId,
       name: account.name,
       broker_or_firm: account.brokerOrFirm,
@@ -66,12 +73,19 @@ class SupabaseDatabaseService {
       is_archived: account.isArchived || false,
       updated_at: new Date().toISOString()
     };
+    if (!isNew) row.id = account.id;
 
-    const { error } = await supabase.from('accounts').upsert(row);
+    const { data, error } = await supabase
+      .from('accounts')
+      .upsert(row)
+      .select('*')
+      .single();
     if (error) {
       console.error('Error saving account:', error);
       throw error;
     }
+    // Return the persisted account so callers can update state with the real UUID
+    return { ...account, id: data.id, currentBalance: Number(data.current_balance) };
   }
 
   async deleteAccount(id: string): Promise<void> {
@@ -149,9 +163,9 @@ class SupabaseDatabaseService {
     }));
   }
 
-  async saveSetup(setup: Setup, userId: string): Promise<void> {
-    const setupRow = {
-      id: setup.id,
+  async saveSetup(setup: Setup, userId: string): Promise<Setup> {
+    const isNew = !isValidUUID(setup.id);
+    const setupRow: Record<string, any> = {
       user_id: userId,
       name: setup.name,
       description: setup.description,
@@ -172,33 +186,60 @@ class SupabaseDatabaseService {
       is_archived: setup.isArchived || false,
       updated_at: new Date().toISOString()
     };
+    if (!isNew) setupRow.id = setup.id;
 
-    const { error: setupErr } = await supabase.from('setups').upsert(setupRow);
+    const { data: savedSetup, error: setupErr } = await supabase
+      .from('setups')
+      .upsert(setupRow)
+      .select('*')
+      .single();
     if (setupErr) {
       console.error('Error saving setup:', setupErr);
       throw setupErr;
     }
+    const realSetupId: string = savedSetup.id;
 
-    // Save checklist items
-    await supabase.from('setup_checklist_items').delete().eq('setup_id', setup.id);
+    // Save checklist items — always delete by real setup id then re-insert
+    await supabase.from('setup_checklist_items').delete().eq('setup_id', realSetupId);
 
+    let savedChecklist: SetupChecklistItem[] = [];
     if (setup.checklist && setup.checklist.length > 0) {
-      const itemRows = setup.checklist.map((item, idx) => ({
-        id: item.id,
-        setup_id: setup.id,
-        name: item.name,
-        description: item.description,
-        required: item.required,
-        order_index: item.order || idx + 1,
-        active: item.active
-      }));
+      // Strip non-UUID item ids so Postgres generates them
+      const itemRows = setup.checklist.map((item, idx) => {
+        const row: Record<string, any> = {
+          setup_id: realSetupId,
+          name: item.name,
+          description: item.description,
+          required: item.required,
+          order_index: item.order || idx + 1,
+          active: item.active
+        };
+        if (isValidUUID(item.id)) row.id = item.id;
+        return row;
+      });
 
-      const { error: itemErr } = await supabase.from('setup_checklist_items').insert(itemRows);
+      const { data: savedItems, error: itemErr } = await supabase
+        .from('setup_checklist_items')
+        .insert(itemRows)
+        .select('*');
       if (itemErr) {
         console.error('Error saving setup checklist items:', itemErr);
         throw itemErr;
       }
+      savedChecklist = (savedItems || []).map(r => ({
+        id: r.id,
+        setupId: r.setup_id,
+        name: r.name,
+        description: r.description || '',
+        required: r.required || false,
+        order: r.order_index || 1,
+        active: r.active !== false,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at
+      }));
     }
+
+    return { ...setup, id: realSetupId, checklist: savedChecklist };
   }
 
   async deleteSetup(id: string): Promise<void> {
@@ -372,9 +413,9 @@ class SupabaseDatabaseService {
     });
   }
 
-  async saveTrade(trade: Trade, userId: string): Promise<void> {
-    const tradeRow = {
-      id: trade.id,
+  async saveTrade(trade: Trade, userId: string): Promise<Trade> {
+    const isNew = !isValidUUID(trade.id);
+    const tradeRow: Record<string, any> = {
       user_id: userId,
       account_id: trade.accountId,
       setup_id: trade.setupId || null,
@@ -446,58 +487,75 @@ class SupabaseDatabaseService {
       is_archived: trade.isArchived || false,
       updated_at: new Date().toISOString()
     };
+    if (!isNew) tradeRow.id = trade.id;
 
-    const { error: tradeErr } = await supabase.from('trades').upsert(tradeRow);
+    const { data: savedTrade, error: tradeErr } = await supabase
+      .from('trades')
+      .upsert(tradeRow)
+      .select('id')
+      .single();
     if (tradeErr) {
       console.error('Error saving trade record:', tradeErr);
       throw tradeErr;
     }
+    const realTradeId: string = savedTrade.id;
 
-    // Save Exits
-    await supabase.from('trade_exits').delete().eq('trade_id', trade.id);
+    // Save Exits — strip non-UUID ids so Postgres generates them
+    await supabase.from('trade_exits').delete().eq('trade_id', realTradeId);
     if (trade.exits && trade.exits.length > 0) {
-      const exitRows = trade.exits.map(ex => ({
-        id: ex.id,
-        trade_id: trade.id,
-        level_name: ex.levelName,
-        exit_price: ex.exitPrice,
-        size_percent: ex.sizePercent,
-        size_quantity: ex.sizeQuantity,
-        realized_pl: ex.realizedPL,
-        realized_r: ex.realizedR,
-        exit_reason: ex.exitReason,
-        exit_timestamp: ex.timestamp || new Date().toISOString()
-      }));
+      const exitRows = trade.exits.map(ex => {
+        const row: Record<string, any> = {
+          trade_id: realTradeId,
+          level_name: ex.levelName,
+          exit_price: ex.exitPrice,
+          size_percent: ex.sizePercent,
+          size_quantity: ex.sizeQuantity,
+          realized_pl: ex.realizedPL,
+          realized_r: ex.realizedR,
+          exit_reason: ex.exitReason,
+          exit_timestamp: ex.timestamp || new Date().toISOString()
+        };
+        if (isValidUUID(ex.id)) row.id = ex.id;
+        return row;
+      });
       await supabase.from('trade_exits').insert(exitRows);
     }
 
-    // Save Screenshots metadata
-    await supabase.from('trade_screenshots').delete().eq('trade_id', trade.id);
+    // Save Screenshots metadata — strip non-UUID ids
+    await supabase.from('trade_screenshots').delete().eq('trade_id', realTradeId);
     if (trade.screenshots && trade.screenshots.length > 0) {
-      const screenshotRows = trade.screenshots.map((s, idx) => ({
-        id: s.id,
-        trade_id: trade.id,
-        category: s.category,
-        caption: s.caption,
-        storage_path: s.storageKey,
-        preview_url: s.previewUrl,
-        order_index: s.order || idx + 1
-      }));
+      const screenshotRows = trade.screenshots.map((s, idx) => {
+        const row: Record<string, any> = {
+          trade_id: realTradeId,
+          category: s.category,
+          caption: s.caption,
+          storage_path: s.storageKey,
+          preview_url: s.previewUrl,
+          order_index: s.order || idx + 1
+        };
+        if (isValidUUID(s.id)) row.id = s.id;
+        return row;
+      });
       await supabase.from('trade_screenshots').insert(screenshotRows);
     }
 
-    // Save Timeline Events
-    await supabase.from('trade_timeline_events').delete().eq('trade_id', trade.id);
+    // Save Timeline Events — strip non-UUID ids
+    await supabase.from('trade_timeline_events').delete().eq('trade_id', realTradeId);
     if (trade.timeline && trade.timeline.length > 0) {
-      const timelineRows = trade.timeline.map(t => ({
-        id: t.id,
-        trade_id: trade.id,
-        event_type: t.type,
-        description: t.description,
-        event_timestamp: t.timestamp || new Date().toISOString()
-      }));
+      const timelineRows = trade.timeline.map(t => {
+        const row: Record<string, any> = {
+          trade_id: realTradeId,
+          event_type: t.type,
+          description: t.description,
+          event_timestamp: t.timestamp || new Date().toISOString()
+        };
+        if (isValidUUID(t.id)) row.id = t.id;
+        return row;
+      });
       await supabase.from('trade_timeline_events').insert(timelineRows);
     }
+
+    return { ...trade, id: realTradeId };
   }
 
   async deleteTrade(id: string): Promise<void> {
