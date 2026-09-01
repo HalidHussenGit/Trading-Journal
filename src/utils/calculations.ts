@@ -375,3 +375,66 @@ export function calculateAdherenceBuckets(trades: Trade[]): AdherenceBucketMetri
     };
   });
 }
+
+// =====================================================================
+// TRADE RESULT HYDRATION
+// Fixes trades saved with netPL=0 due to the old CloseTradeModal bug.
+// Applied at data-load time — does NOT mutate the database.
+// Uses price-distance / initial-risk-distance * riskAmount which is
+// unit-agnostic and works for Forex, Indices, Crypto, etc.
+// =====================================================================
+export function rehydrateTradeResult(trade: Trade): Trade {
+  const { status, actual, planned, direction, result } = trade;
+
+  // Only fix Closed trades where netPL is exactly 0 but an exit price is recorded
+  if (
+    status !== 'Closed' ||
+    result?.netPL !== 0 ||
+    !actual?.exit ||
+    actual.exit === 0
+  ) {
+    return trade;
+  }
+
+  const entry = planned?.entry || actual?.entry || 0;
+  const sl = planned?.stopLoss || 0;
+  const actualExit = actual.exit;
+  const riskAmount = planned?.riskAmount || 0;
+
+  if (!entry || !actualExit || entry === actualExit) return trade;
+
+  const priceDiff = direction === 'Long'
+    ? actualExit - entry
+    : entry - actualExit;
+
+  const initialRisk = direction === 'Long'
+    ? entry - sl
+    : sl - entry;
+
+  // Need both riskAmount and a valid stop distance to recalculate meaningfully
+  if (riskAmount <= 0 || initialRisk <= 0) return trade;
+
+  const rMultiple = priceDiff / initialRisk;
+  const fees = actual.fees || 0;
+  const commission = actual.commission || 0;
+  const swap = actual.swap || 0;
+  const grossPL = rMultiple * riskAmount;
+  const netPL = grossPL - fees - commission - swap;
+
+  // Re-derive outcome label from the recalculated value
+  let outcomeStatus = result?.status ?? 'Custom';
+  if (netPL > 0.01) outcomeStatus = 'Win';
+  else if (netPL < -0.01) outcomeStatus = 'Loss';
+  else outcomeStatus = 'Breakeven';
+
+  return {
+    ...trade,
+    result: {
+      ...result,
+      status: outcomeStatus,
+      netPL: Number(netPL.toFixed(2)),
+      grossPL: Number(grossPL.toFixed(2)),
+      rMultiple: Number(rMultiple.toFixed(2))
+    }
+  };
+}

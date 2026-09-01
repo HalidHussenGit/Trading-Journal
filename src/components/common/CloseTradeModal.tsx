@@ -28,19 +28,56 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const entry = trade.planned?.entry || 0;
+      const sl = trade.planned?.stopLoss || 0;
+      const size = trade.planned?.positionSize || (trade.actual?.positionSize || 1);
+      const pointValue = trade.planned?.pointValue || 1;
+      const contractSize = trade.planned?.contractSize || 1;
+      const riskAmount = trade.planned?.riskAmount || 0;
+
+      let priceDiff = 0;
+      if (trade.direction === 'Long') {
+        priceDiff = actualExit - entry;
+      } else {
+        priceDiff = entry - actualExit;
+      }
+
+      const grossPL = priceDiff * size * pointValue * contractSize;
+      
+      const fees = trade.actual?.fees || 0;
+      const commission = trade.actual?.commission || 0;
+      const swap = trade.actual?.swap || 0;
+      const netPL = grossPL - fees - commission - swap;
+
+      let rMultiple = 0;
+      if (riskAmount > 0) {
+        rMultiple = netPL / riskAmount;
+      } else {
+        const initialRisk = trade.direction === 'Long' ? (entry - sl) : (sl - entry);
+        if (initialRisk > 0) {
+          rMultiple = priceDiff / initialRisk;
+        }
+      }
+
       const closedTrade: Trade = {
         ...trade,
         status: 'Closed',
         actual: {
           ...trade.actual,
+          entry: trade.actual?.entry || entry,
           exit: actualExit,
+          positionSize: size,
+          fees,
+          commission,
+          swap,
+          slippage: trade.actual?.slippage || 0,
           exitReason: outcome
         },
         result: {
           status: outcome,
-          netPL: 0,
-          grossPL: 0,
-          rMultiple: 0
+          netPL: Number(netPL.toFixed(2)),
+          grossPL: Number(grossPL.toFixed(2)),
+          rMultiple: Number(rMultiple.toFixed(2))
         },
         journal: {
           ...trade.journal,

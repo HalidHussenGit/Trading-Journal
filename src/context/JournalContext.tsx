@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Account, Setup, Trade, TradingDay, Tag, Settings, FilterState } from '../types';
 import { dbService } from '../db/database';
+import { rehydrateTradeResult } from '../utils/calculations';
 import { LoginPage } from '../components/auth/LoginPage';
 
 export type AutosaveStatus = 'Saved' | 'Saving...' | 'Unsaved changes' | 'Save failed';
@@ -140,7 +141,7 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       setAccounts(accs);
       setSetups(stps);
-      setTrades(trds);
+      setTrades(trds.map(rehydrateTradeResult));
       setTradingDays(days);
       setTags(tgs);
       if (stgs) setSettings(stgs);
@@ -244,14 +245,15 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     setAutosaveStatus('Saving...');
     try {
       const saved = await dbService.saveTrade(trade, currentUser.id);
+      const hydrated = rehydrateTradeResult(saved);
       setTrades(prev => {
         const idx = prev.findIndex(t => t.id === trade.id || t.id === saved.id);
         if (idx >= 0) {
           const updated = [...prev];
-          updated[idx] = saved;
+          updated[idx] = hydrated;
           return updated;
         }
-        return [saved, ...prev];
+        return [hydrated, ...prev];
       });
 
       // Refetch accounts to display auto-recalculated current_balance from Postgres trigger
