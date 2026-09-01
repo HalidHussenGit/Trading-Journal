@@ -315,12 +315,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        t.status === 'Closed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
+                        t.status === 'Closed' ? (
+                          isWin ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                          isLoss ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                          'bg-slate-100 text-slate-600 border border-slate-200'
+                        ) :
                         t.status === 'Draft' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                         'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}>
-                        {t.status}
+                        {t.status === 'Closed' ? (t.result?.status || 'Closed') : t.status}
                       </span>
 
                       {isClosed ? (
