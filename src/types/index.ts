@@ -93,6 +93,7 @@ export interface TradePlanned {
   riskAmount: number; // $ value
   plannedRR: number;
   positionSize: number; // lots or units
+  lotSize?: number; // User-entered lot size
   pointValue?: number;
   contractSize?: number;
   leverage?: number;
@@ -102,6 +103,7 @@ export interface TradeActual {
   entry: number;
   exit: number; // weighted average exit price across exits
   positionSize: number;
+  lotSize?: number;
   fees: number;
   commission: number;
   swap: number;

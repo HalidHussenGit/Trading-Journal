@@ -255,6 +255,8 @@
 | is_archived | boolean | NO |
 | created_at | timestamp with time zone | NO |
 | updated_at | timestamp with time zone | NO |
+| planned_lot_size | numeric | YES |
+| actual_lot_size | numeric | YES |
 
 ### Relationships
 

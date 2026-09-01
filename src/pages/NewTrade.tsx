@@ -34,6 +34,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const [entryPrice, setEntryPrice] = useState<number>(existingTrade?.planned?.entry || 1.0850);
   const [stopLossPrice, setStopLossPrice] = useState<number>(existingTrade?.planned?.stopLoss || 1.0830);
   const [takeProfitPrice, setTakeProfitPrice] = useState<number>(existingTrade?.planned?.takeProfit || 1.0910);
+  const [lotSize, setLotSize] = useState<number>(existingTrade?.planned?.lotSize || 0);
   const riskPercent = existingTrade?.planned?.riskPercent || settings.defaultRiskPercent || 1.0;
 
   // Partial Exits
@@ -72,6 +73,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       setEntryPrice(existingTrade.planned?.entry || 1.0850);
       setStopLossPrice(existingTrade.planned?.stopLoss || 1.0830);
       setTakeProfitPrice(existingTrade.planned?.takeProfit || 1.0910);
+      setLotSize(existingTrade.planned?.lotSize || 0);
       setExits(existingTrade.exits && existingTrade.exits.length > 0 ? existingTrade.exits : [
         { id: '', levelName: 'TP1', exitPrice: existingTrade.planned?.takeProfit || 1.0910, sizePercent: 100, realizedPL: 0, realizedR: 0, exitReason: 'Target Reached', timestamp: new Date().toISOString() }
       ]);
@@ -199,13 +201,15 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         riskPercent,
         riskAmount: riskCalc.riskAmount,
         plannedRR: riskCalc.plannedRR,
-        positionSize: riskCalc.positionSize
+        positionSize: riskCalc.positionSize,
+        lotSize: lotSize > 0 ? lotSize : undefined
       },
 
       actual: existingTrade?.actual || {
         entry: entryPrice,
         exit: 0,
         positionSize: riskCalc.positionSize,
+        lotSize: lotSize > 0 ? lotSize : undefined,
         fees: 0,
         commission: 0,
         swap: 0,
@@ -542,7 +546,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-4">
           <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Plan & Position Sizing</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Planned Entry *</label>
               <input
@@ -575,6 +579,18 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 required
                 value={takeProfitPrice}
                 onChange={e => setTakeProfitPrice(parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Lot Size</label>
+              <input
+                type="number"
+                step="any"
+                value={lotSize || ''}
+                onChange={e => setLotSize(parseFloat(e.target.value) || 0)}
+                placeholder="e.g. 1.0"
                 className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
               />
             </div>
