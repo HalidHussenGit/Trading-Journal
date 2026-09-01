@@ -400,19 +400,18 @@ export function calculateAdherenceBuckets(trades: Trade[]): AdherenceBucketMetri
 
 // =====================================================================
 // PROFIT CONSISTENCY CALCULATION
-// Prop firm rule: No single day's profit can exceed X% of total profit.
-// e.g. if rule is 30%, the best day must be ≤ 30% of total profit.
+// Prop firm rule: No single trade's profit can exceed X% of total net profit.
 // =====================================================================
 export interface ProfitConsistencyResult {
-  totalProfit: number;          // Sum of all winning-day PL
-  bestDayPL: number;            // Highest single-day net PL
-  bestDayDate: string;          // Date of the best day
-  bestDayPercent: number;       // bestDayPL / totalProfit * 100
-  consistencyTarget: number;    // Account's rule (e.g. 30%)
+  totalNetPL: number;           // Sum of ALL closed trades PL (wins + losses)
+  consistencyLimit: number;     // target% of totalNetPL — max any single trade can earn
+  bestTradePL: number;          // Highest individual winning trade PL
+  bestTradeDate: string;        // Date of that best trade
+  consistencyTarget: number;    // Account's rule (e.g. 50%)
   isConsistent: boolean;        // true = passes rule
-  status: 'Pass' | 'Fail' | 'Warning' | 'N/A';
-  daysWithProfit: number;       // Number of profitable days
-  totalTradingDays: number;     // Total days with any closed trades
+  status: 'Pass' | 'Fail' | 'N/A';
+  winningTradesCount: number;
+  totalClosedTrades: number;
 }
 
 export function calculateProfitConsistency(
@@ -422,62 +421,49 @@ export function calculateProfitConsistency(
   const closedTrades = trades.filter(t => t.status === 'Closed' && !t.isArchived);
 
   const empty: ProfitConsistencyResult = {
-    totalProfit: 0,
-    bestDayPL: 0,
-    bestDayDate: '',
-    bestDayPercent: 0,
+    totalNetPL: 0,
+    consistencyLimit: 0,
+    bestTradePL: 0,
+    bestTradeDate: '',
     consistencyTarget,
     isConsistent: true,
     status: 'N/A',
-    daysWithProfit: 0,
-    totalTradingDays: 0
+    winningTradesCount: 0,
+    totalClosedTrades: 0,
   };
 
   if (closedTrades.length === 0 || consistencyTarget <= 0) return empty;
 
-  // Aggregate PL per day
-  const dayMap = new Map<string, number>();
-  closedTrades.forEach(t => {
-    const pl = t.result?.netPL || 0;
-    dayMap.set(t.date, (dayMap.get(t.date) || 0) + pl);
-  });
+  // Total net PL across ALL closed trades (wins + losses combined)
+  const totalNetPL = closedTrades.reduce((sum, t) => sum + (t.result?.netPL || 0), 0);
 
-  const dailyPLs = Array.from(dayMap.entries()); // [date, pl]
-  const totalTradingDays = dailyPLs.length;
+  // Need positive net PL to be meaningful
+  if (totalNetPL <= 0) return { ...empty, totalClosedTrades: closedTrades.length };
 
-  // Only count profitable days for the consistency denominator
-  const profitableDays = dailyPLs.filter(([, pl]) => pl > 0);
-  const daysWithProfit = profitableDays.length;
-  const totalProfit = profitableDays.reduce((sum, [, pl]) => sum + pl, 0);
+  // The maximum any single trade is allowed to earn
+  const consistencyLimit = (consistencyTarget / 100) * totalNetPL;
 
-  if (totalProfit <= 0 || daysWithProfit === 0) return { ...empty, totalTradingDays };
+  // Best single winning trade
+  const winningTrades = closedTrades.filter(t => (t.result?.netPL || 0) > 0);
+  if (winningTrades.length === 0) return { ...empty, totalNetPL: Number(totalNetPL.toFixed(2)), totalClosedTrades: closedTrades.length };
 
-  // Find best single day
-  const [bestDayDate, bestDayPL] = profitableDays.reduce(
-    (best, cur) => (cur[1] > best[1] ? cur : best),
-    profitableDays[0]
-  );
+  const bestTrade = winningTrades.reduce((best, t) =>
+    (t.result?.netPL || 0) > (best.result?.netPL || 0) ? t : best
+  , winningTrades[0]);
 
-  const bestDayPercent = (bestDayPL / totalProfit) * 100;
-  const isConsistent = bestDayPercent <= consistencyTarget;
-
-  let status: ProfitConsistencyResult['status'] = 'Pass';
-  if (bestDayPercent > consistencyTarget) {
-    status = 'Fail';
-  } else if (bestDayPercent > consistencyTarget * 0.85) {
-    status = 'Warning'; // within 15% of breaching the limit
-  }
+  const bestTradePL = bestTrade.result?.netPL || 0;
+  const isConsistent = bestTradePL <= consistencyLimit;
 
   return {
-    totalProfit: Number(totalProfit.toFixed(2)),
-    bestDayPL: Number(bestDayPL.toFixed(2)),
-    bestDayDate,
-    bestDayPercent: Number(bestDayPercent.toFixed(1)),
+    totalNetPL: Number(totalNetPL.toFixed(2)),
+    consistencyLimit: Number(consistencyLimit.toFixed(2)),
+    bestTradePL: Number(bestTradePL.toFixed(2)),
+    bestTradeDate: bestTrade.date,
     consistencyTarget,
     isConsistent,
-    status,
-    daysWithProfit,
-    totalTradingDays
+    status: isConsistent ? 'Pass' : 'Fail',
+    winningTradesCount: winningTrades.length,
+    totalClosedTrades: closedTrades.length,
   };
 }
 
