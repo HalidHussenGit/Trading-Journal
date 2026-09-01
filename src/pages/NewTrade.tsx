@@ -415,7 +415,8 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               >
                 <option value="Asian">Asian</option>
                 <option value="London">London</option>
-                <option value="New York">New York</option>
+                <option value="New York (AM)">New York (AM)</option>
+                <option value="New York (PM)">New York (PM)</option>
                 <option value="Overlap">Overlap</option>
                 <option value="Off-Hours">Off-Hours</option>
               </select>
