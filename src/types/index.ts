@@ -40,12 +40,12 @@ export interface Setup {
   instrument: string;
   timeframes: string[];
   sessions: string[];
-  direction: 'Long' | 'Short' | 'Both';
+  direction?: 'Long' | 'Short' | 'Both';
   entryModel: string;
   stopLossModel: string;
   takeProfitModel: string;
-  minimumRR: number;
-  defaultRiskPercent: number;
+  minimumRR?: number;
+  defaultRiskPercent?: number;
   rules: string[];
   invalidConditions: string[];
   checklist: SetupChecklistItem[];

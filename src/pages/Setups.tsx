@@ -21,12 +21,9 @@ export const Setups: React.FC = () => {
       instrument: 'EURUSD, GBPUSD',
       timeframes: ['15m', '1h'],
       sessions: ['London', 'New York'],
-      direction: 'Both',
       entryModel: 'Breakout & Retest',
       stopLossModel: 'Swing High/Low',
       takeProfitModel: 'Fixed R:R / Liquidity Pool',
-      minimumRR: 2.0,
-      defaultRiskPercent: 1.0,
       rules: [],
       invalidConditions: [],
       checklist: [
@@ -95,12 +92,9 @@ export const Setups: React.FC = () => {
       instrument: editingSetup.instrument || '',
       timeframes: editingSetup.timeframes || [],
       sessions: editingSetup.sessions || [],
-      direction: editingSetup.direction || 'Both',
       entryModel: editingSetup.entryModel || '',
       stopLossModel: editingSetup.stopLossModel || '',
       takeProfitModel: editingSetup.takeProfitModel || '',
-      minimumRR: Number(editingSetup.minimumRR) || 1.5,
-      defaultRiskPercent: editingSetup.defaultRiskPercent !== undefined && !isNaN(Number(editingSetup.defaultRiskPercent)) ? Number(editingSetup.defaultRiskPercent) : 1.0,
       rules: editingSetup.rules || [],
       invalidConditions: editingSetup.invalidConditions || [],
       checklist: (editingSetup.checklist || []).map((item, idx) => ({
@@ -125,7 +119,7 @@ export const Setups: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold text-slate-900">Trading Setups & Checklist Rules</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Define entry models, min R:R requirements, and mandatory setup checklists.</p>
+          <p className="text-xs text-slate-500 mt-0.5">Define entry models and mandatory setup checklists.</p>
         </div>
         <button
           onClick={handleOpenCreate}
@@ -157,9 +151,11 @@ export const Setups: React.FC = () => {
               <div key={setup.id} className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4 hover:border-slate-300 transition-all">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-700">
-                      {setup.direction} · {setup.market}
-                    </span>
+                    {setup.market && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-700">
+                        {setup.market}
+                      </span>
+                    )}
                     <h3 className="text-sm font-bold text-slate-900 mt-1">{setup.name}</h3>
                     <p className="text-xs text-slate-500 line-clamp-1">{setup.description || 'No description provided'}</p>
                   </div>
@@ -185,15 +181,9 @@ export const Setups: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded border border-slate-100 font-mono">
-                  <div>
-                    <span className="text-slate-400 text-[10px]">Min R:R</span>
-                    <div className="font-bold text-slate-800">1:{setup.minimumRR}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px]">Checklist Items</span>
-                    <div className="font-bold text-slate-800">{checklistCount} ({requiredCount} req)</div>
-                  </div>
+                <div className="bg-slate-50 p-2.5 rounded border border-slate-100 font-mono text-xs flex items-center justify-between">
+                  <span className="text-slate-400 text-[10px]">Checklist Items</span>
+                  <div className="font-bold text-slate-800">{checklistCount} ({requiredCount} req)</div>
                 </div>
 
                 {/* Quick preview of checklist */}
@@ -259,64 +249,21 @@ export const Setups: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Market</label>
-                    <input
-                      type="text"
-                      value={editingSetup.market || ''}
-                      onChange={e => setEditingSetup({ ...editingSetup, market: e.target.value })}
-                      placeholder="e.g. Forex, Crypto, Indices"
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Direction</label>
-                    <select
-                      value={editingSetup.direction || 'Both'}
-                      onChange={e => setEditingSetup({ ...editingSetup, direction: e.target.value as any })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
-                    >
-                      <option value="Long">Long Only</option>
-                      <option value="Short">Short Only</option>
-                      <option value="Both">Both (Long & Short)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Minimum R:R Target *</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      required
-                      value={editingSetup.minimumRR ?? 2.0}
-                      onChange={e => setEditingSetup({ ...editingSetup, minimumRR: parseFloat(e.target.value) || 1.5 })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Default Risk %</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={editingSetup.defaultRiskPercent ?? 0}
-                      onChange={e => {
-                        const parsed = parseFloat(e.target.value);
-                        setEditingSetup({ ...editingSetup, defaultRiskPercent: isNaN(parsed) ? 0 : parsed });
-                      }}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Market</label>
+                  <input
+                    type="text"
+                    value={editingSetup.market || ''}
+                    onChange={e => setEditingSetup({ ...editingSetup, market: e.target.value })}
+                    placeholder="e.g. Forex, Crypto, Indices"
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Description / Edge Summary</label>
                   <textarea
-                    rows={2}
+                    rows={3}
                     value={editingSetup.description || ''}
                     onChange={e => setEditingSetup({ ...editingSetup, description: e.target.value })}
                     placeholder="Briefly describe why this setup works and what market conditions favor it..."

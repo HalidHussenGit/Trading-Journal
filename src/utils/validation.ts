@@ -45,10 +45,6 @@ export function validateSetup(setup: Partial<Setup>): ValidationResult {
     errors.push('Setup name is required.');
   }
 
-  if (setup.minimumRR !== undefined && (isNaN(setup.minimumRR) || setup.minimumRR < 0)) {
-    errors.push('Minimum R:R must be a non-negative number.');
-  }
-
   if (setup.checklist) {
     setup.checklist.forEach((item, idx) => {
       if (!item.name || item.name.trim() === '') {
