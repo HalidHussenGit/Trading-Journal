@@ -22,6 +22,13 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
 
   const handleOutcomeChange = (o: TradeOutcome) => {
     setOutcome(o);
+    if (o === 'Win' && trade.planned?.takeProfit) {
+      setActualExit(trade.planned.takeProfit);
+    } else if (o === 'Loss' && trade.planned?.stopLoss) {
+      setActualExit(trade.planned.stopLoss);
+    } else if (o === 'Breakeven' && trade.planned?.entry) {
+      setActualExit(trade.planned.entry);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {

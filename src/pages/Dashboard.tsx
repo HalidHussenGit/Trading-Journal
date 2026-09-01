@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useJournal } from '../context/JournalContext';
-import { calculatePortfolioMetrics, calculateAdherenceBuckets } from '../utils/calculations';
+import { calculatePortfolioMetrics, calculateAdherenceBuckets, calculateProfitConsistency } from '../utils/calculations';
 import { EquityCurveChart, DailyPLBarChart, RMultipleDistributionChart } from '../components/common/Charts';
 import { PageId } from '../components/layout/Sidebar';
 import { CloseTradeModal } from '../components/common/CloseTradeModal';
@@ -29,6 +29,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   
   const metrics = calculatePortfolioMetrics(filteredTrades, initialBalance);
   const adherenceBuckets = calculateAdherenceBuckets(filteredTrades);
+
+  // Profit Consistency — only meaningful when a single account is selected with a rule set
+  const consistencyTarget = activeAccount?.consistencyRatePercent ?? 0;
+  const consistency = calculateProfitConsistency(filteredTrades, consistencyTarget);
 
   // Closed trades sorted chronologically for equity curve
   const closedTrades = filteredTrades
@@ -150,7 +154,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className={`grid gap-4 ${consistencyTarget > 0 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
         {/* Net P&L */}
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Net P&L</div>
@@ -184,7 +188,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Process & Checklist Adherence */}
+        {/* Checklist Adherence */}
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Checklist Adherence</div>
           <div className="text-lg font-bold font-mono text-slate-900 mt-1">
@@ -194,6 +198,68 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             Score: <span className="font-semibold text-slate-800">{metrics.hasEnoughData ? `${metrics.overallQualityScore}/10` : 'N/A'}</span>
           </div>
         </div>
+
+        {/* Profit Consistency — only shown when a consistency rule is set on the account */}
+        {consistencyTarget > 0 && (
+          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Profit Consistency</div>
+              {consistency.status !== 'N/A' && (
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                  consistency.status === 'Pass'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : consistency.status === 'Warning'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}>
+                  {consistency.status}
+                </span>
+              )}
+            </div>
+
+            {consistency.status === 'N/A' ? (
+              <>
+                <div className="text-lg font-bold font-mono text-slate-400 mt-1">N/A</div>
+                <div className="text-[11px] text-slate-400 mt-1">No profitable days yet</div>
+              </>
+            ) : (
+              <>
+                {/* Best day % of total profit — the key number */}
+                <div className={`text-lg font-bold font-mono mt-1 ${
+                  consistency.status === 'Pass'
+                    ? 'text-emerald-600'
+                    : consistency.status === 'Warning'
+                    ? 'text-amber-600'
+                    : 'text-rose-600'
+                }`}>
+                  {consistency.bestDayPercent}%
+                </div>
+
+                {/* Progress bar: fill = bestDayPercent, limit = consistencyTarget */}
+                <div className="mt-2 mb-1.5">
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        consistency.status === 'Pass'
+                          ? 'bg-emerald-500'
+                          : consistency.status === 'Warning'
+                          ? 'bg-amber-500'
+                          : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${Math.min((consistency.bestDayPercent / consistencyTarget) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-slate-500">
+                  Best day: <span className="font-mono font-semibold text-slate-700">${consistency.bestDayPL.toLocaleString()}</span>
+                  <span className="mx-1 text-slate-300">·</span>
+                  Limit: <span className="font-mono font-semibold text-slate-700">{consistencyTarget}%</span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Main Charts Section */}

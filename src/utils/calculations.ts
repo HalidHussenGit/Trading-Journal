@@ -401,6 +401,89 @@ export function calculateAdherenceBuckets(trades: Trade[]): AdherenceBucketMetri
 }
 
 // =====================================================================
+// PROFIT CONSISTENCY CALCULATION
+// Prop firm rule: No single day's profit can exceed X% of total profit.
+// e.g. if rule is 30%, the best day must be ≤ 30% of total profit.
+// =====================================================================
+export interface ProfitConsistencyResult {
+  totalProfit: number;          // Sum of all winning-day PL
+  bestDayPL: number;            // Highest single-day net PL
+  bestDayDate: string;          // Date of the best day
+  bestDayPercent: number;       // bestDayPL / totalProfit * 100
+  consistencyTarget: number;    // Account's rule (e.g. 30%)
+  isConsistent: boolean;        // true = passes rule
+  status: 'Pass' | 'Fail' | 'Warning' | 'N/A';
+  daysWithProfit: number;       // Number of profitable days
+  totalTradingDays: number;     // Total days with any closed trades
+}
+
+export function calculateProfitConsistency(
+  trades: Trade[],
+  consistencyTarget: number = 0
+): ProfitConsistencyResult {
+  const closedTrades = trades.filter(t => t.status === 'Closed' && !t.isArchived);
+
+  const empty: ProfitConsistencyResult = {
+    totalProfit: 0,
+    bestDayPL: 0,
+    bestDayDate: '',
+    bestDayPercent: 0,
+    consistencyTarget,
+    isConsistent: true,
+    status: 'N/A',
+    daysWithProfit: 0,
+    totalTradingDays: 0
+  };
+
+  if (closedTrades.length === 0 || consistencyTarget <= 0) return empty;
+
+  // Aggregate PL per day
+  const dayMap = new Map<string, number>();
+  closedTrades.forEach(t => {
+    const pl = t.result?.netPL || 0;
+    dayMap.set(t.date, (dayMap.get(t.date) || 0) + pl);
+  });
+
+  const dailyPLs = Array.from(dayMap.entries()); // [date, pl]
+  const totalTradingDays = dailyPLs.length;
+
+  // Only count profitable days for the consistency denominator
+  const profitableDays = dailyPLs.filter(([, pl]) => pl > 0);
+  const daysWithProfit = profitableDays.length;
+  const totalProfit = profitableDays.reduce((sum, [, pl]) => sum + pl, 0);
+
+  if (totalProfit <= 0 || daysWithProfit === 0) return { ...empty, totalTradingDays };
+
+  // Find best single day
+  const [bestDayDate, bestDayPL] = profitableDays.reduce(
+    (best, cur) => (cur[1] > best[1] ? cur : best),
+    profitableDays[0]
+  );
+
+  const bestDayPercent = (bestDayPL / totalProfit) * 100;
+  const isConsistent = bestDayPercent <= consistencyTarget;
+
+  let status: ProfitConsistencyResult['status'] = 'Pass';
+  if (bestDayPercent > consistencyTarget) {
+    status = 'Fail';
+  } else if (bestDayPercent > consistencyTarget * 0.85) {
+    status = 'Warning'; // within 15% of breaching the limit
+  }
+
+  return {
+    totalProfit: Number(totalProfit.toFixed(2)),
+    bestDayPL: Number(bestDayPL.toFixed(2)),
+    bestDayDate,
+    bestDayPercent: Number(bestDayPercent.toFixed(1)),
+    consistencyTarget,
+    isConsistent,
+    status,
+    daysWithProfit,
+    totalTradingDays
+  };
+}
+
+// =====================================================================
 // TRADE RESULT HYDRATION
 // Fixes trades saved with netPL=0 due to the old CloseTradeModal bug.
 // Applied at data-load time — does NOT mutate the database.
