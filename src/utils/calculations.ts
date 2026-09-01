@@ -246,7 +246,23 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
     if (ddAmount > maxDDAmount) maxDDAmount = ddAmount;
     if (ddPercent > maxDDPercent) maxDDPercent = ddPercent;
 
-    if (pl > 0.01) {
+    let isWin = false;
+    let isLoss = false;
+    const outcomeStatus = t.result?.status;
+
+    if (outcomeStatus === 'Win' || outcomeStatus === 'Partial Win') {
+      isWin = true;
+    } else if (outcomeStatus === 'Loss' || outcomeStatus === 'Partial Loss') {
+      isLoss = true;
+    } else if (outcomeStatus === 'Breakeven') {
+      isWin = false;
+      isLoss = false;
+    } else {
+      if (pl > 0.01) isWin = true;
+      else if (pl < -0.01) isLoss = true;
+    }
+
+    if (isWin) {
       winningCount++;
       grossWins += pl;
       winningR += r;
@@ -256,7 +272,7 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
       currentLosses = 0;
       if (currentWins > maxWinsStreak) maxWinsStreak = currentWins;
       lastOutcome = 'win';
-    } else if (pl < -0.01) {
+    } else if (isLoss) {
       losingCount++;
       grossLosses += Math.abs(pl);
       losingR += Math.abs(r);
