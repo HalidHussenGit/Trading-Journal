@@ -1,10 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Account, Setup, Trade, TradingDay, Tag, Settings, FilterState } from '../types';
-import { dbService, StorageStatus } from '../db/database';
+import { dbService } from '../db/database';
+import { LoginPage } from '../components/auth/LoginPage';
 
 export type AutosaveStatus = 'Saved' | 'Saving...' | 'Unsaved changes' | 'Save failed';
 
+export interface UserSession {
+  id: string;
+  username: string;
+}
+
 interface JournalContextType {
+  currentUser: UserSession | null;
   accounts: Account[];
   setups: Setup[];
   trades: Trade[];
@@ -12,11 +19,12 @@ interface JournalContextType {
   tags: Tag[];
   settings: Settings;
   autosaveStatus: AutosaveStatus;
-  storageStatus: StorageStatus | null;
+  storageStatus: { usageMB: string; quotaMB: string; isPersisted: boolean } | null;
   filters: FilterState;
   isLoading: boolean;
   notification: { type: 'success' | 'error' | 'info'; message: string } | null;
 
+  logout: () => void;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   resetFilters: () => void;
   showNotification: (type: 'success' | 'error' | 'info', message: string) => void;
@@ -36,8 +44,8 @@ interface JournalContextType {
   refreshData: () => Promise<void>;
   exportBackup: () => Promise<Blob>;
   importBackup: (file: File) => Promise<{ success: boolean; message: string }>;
-  saveScreenshotBlob: (key: string, blob: Blob) => Promise<void>;
-  getScreenshotBlob: (key: string) => Promise<Blob | null>;
+  saveScreenshotBlob: (key: string, blob: Blob) => Promise<string>;
+  getScreenshotUrl: (key: string) => Promise<string | null>;
 }
 
 const defaultFilters: FilterState = {
@@ -59,17 +67,44 @@ const defaultFilters: FilterState = {
   searchQuery: ''
 };
 
+const defaultSettings: Settings = {
+  theme: 'Light',
+  currency: '$',
+  dateFormat: 'YYYY-MM-DD',
+  timezone: 'UTC',
+  defaultAccountId: '',
+  defaultSetupId: '',
+  defaultRiskPercent: 1.0,
+  normalRiskMaxPercent: 1.5,
+  warningRiskMaxPercent: 3.0,
+  criticalRiskMaxPercent: 5.0,
+  autosaveIntervalMs: 2000,
+  autosaveEnabled: true,
+  hardChecklistEnforcement: false,
+  hardRiskWarnings: true,
+  noTradeReminders: true,
+  storagePersisted: true
+};
+
 const JournalContext = createContext<JournalContextType | undefined>(undefined);
 
 export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(() => {
+    try {
+      const stored = localStorage.getItem('trading_journal_user_session');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [setups, setSetups] = useState<Setup[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [tradingDays, setTradingDays] = useState<TradingDay[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [settings, setSettings] = useState<Settings>(dbService.getDefaultSettings());
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('Saved');
-  const [storageStatus, setStorageStatus] = useState<StorageStatus | null>(null);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -81,24 +116,39 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, 4000);
   };
 
-  const loadData = async () => {
+  const logout = () => {
+    localStorage.removeItem('trading_journal_user_session');
+    setCurrentUser(null);
+    setAccounts([]);
+    setSetups([]);
+    setTrades([]);
+    setTradingDays([]);
+    setTags([]);
+  };
+
+  const loadData = async (userId: string) => {
     setIsLoading(true);
     try {
-      await dbService.init();
-      const data = await dbService.loadAllData();
-      setAccounts(data.accounts);
-      setSetups(data.setups);
-      setTrades(data.trades);
-      setTradingDays(data.tradingDays);
-      setTags(data.tags);
-      setSettings(data.settings);
+      const [accs, stps, trds, days, tgs, stgs] = await Promise.all([
+        dbService.getAllAccounts(userId),
+        dbService.getAllSetups(userId),
+        dbService.getAllTrades(userId),
+        dbService.getAllTradingDays(userId),
+        dbService.getAllTags(userId),
+        dbService.getSettings(userId)
+      ]);
 
-      const status = await dbService.getStorageStatus();
-      setStorageStatus(status);
+      setAccounts(accs);
+      setSetups(stps);
+      setTrades(trds);
+      setTradingDays(days);
+      setTags(tgs);
+      if (stgs) setSettings(stgs);
+
       setAutosaveStatus('Saved');
     } catch (err: any) {
-      console.error('Failed to load data from IndexedDB:', err);
-      showNotification('error', `Failed to load database: ${err.message}`);
+      console.error('Failed to load data from Supabase:', err);
+      showNotification('error', `Cloud Sync error: ${err.message}`);
       setAutosaveStatus('Save failed');
     } finally {
       setIsLoading(false);
@@ -106,17 +156,22 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentUser?.id) {
+      loadData(currentUser.id);
+    } else {
+      setIsLoading(false);
+    }
+  }, [currentUser?.id]);
 
   const resetFilters = () => {
     setFilters(defaultFilters);
   };
 
   const saveAccount = async (account: Account) => {
+    if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveAccount(account);
+      await dbService.saveAccount(account, currentUser.id);
       setAccounts(prev => {
         const idx = prev.findIndex(a => a.id === account.id);
         if (idx >= 0) {
@@ -149,9 +204,10 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const saveSetup = async (setup: Setup) => {
+    if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveSetup(setup);
+      await dbService.saveSetup(setup, currentUser.id);
       setSetups(prev => {
         const idx = prev.findIndex(s => s.id === setup.id);
         if (idx >= 0) {
@@ -184,9 +240,10 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const saveTrade = async (trade: Trade) => {
+    if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveTrade(trade);
+      await dbService.saveTrade(trade, currentUser.id);
       setTrades(prev => {
         const idx = prev.findIndex(t => t.id === trade.id);
         if (idx >= 0) {
@@ -197,18 +254,10 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
         return [trade, ...prev];
       });
 
-      // Update associated Account current balance if trade is closed
-      if (trade.status === 'Closed' && trade.accountId) {
-        const acc = accounts.find(a => a.id === trade.accountId);
-        if (acc) {
-          // Recalculate account balance based on trades
-          const accTrades = [...trades.filter(t => t.id !== trade.id && t.accountId === acc.id && t.status === 'Closed'), trade];
-          const totalPL = accTrades.reduce((sum, t) => sum + (t.result?.netPL || 0), 0);
-          const newBalance = acc.initialBalance + totalPL;
-          const updatedAcc = { ...acc, currentBalance: newBalance, updatedAt: new Date().toISOString() };
-          await dbService.saveAccount(updatedAcc);
-          setAccounts(prev => prev.map(a => a.id === acc.id ? updatedAcc : a));
-        }
+      // Refetch accounts to display auto-recalculated current_balance from Postgres trigger
+      if (currentUser?.id) {
+        const refreshedAccounts = await dbService.getAllAccounts(currentUser.id);
+        setAccounts(refreshedAccounts);
       }
 
       setAutosaveStatus('Saved');
@@ -225,6 +274,13 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       await dbService.deleteTrade(id);
       setTrades(prev => prev.filter(t => t.id !== id));
+      
+      // Refetch accounts to reflect trigger recalculation
+      if (currentUser?.id) {
+        const refreshedAccounts = await dbService.getAllAccounts(currentUser.id);
+        setAccounts(refreshedAccounts);
+      }
+
       setAutosaveStatus('Saved');
       showNotification('info', `Trade #${id} deleted.`);
     } catch (err: any) {
@@ -234,9 +290,10 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const saveDayLog = async (day: TradingDay) => {
+    if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveTradingDay(day);
+      await dbService.saveTradingDay(day, currentUser.id);
       setTradingDays(prev => {
         const idx = prev.findIndex(d => d.id === day.id);
         if (idx >= 0) {
@@ -255,9 +312,10 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const saveSettings = async (newSettings: Settings) => {
+    if (!currentUser) return;
     setAutosaveStatus('Saving...');
     try {
-      await dbService.saveSettings(newSettings);
+      await dbService.saveSettings(newSettings, currentUser.id);
       setSettings(newSettings);
       setAutosaveStatus('Saved');
       showNotification('success', 'Settings saved.');
@@ -268,31 +326,46 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const refreshData = async () => {
-    await loadData();
-  };
-
-  const exportBackup = async () => {
-    return await dbService.exportFullBackupZip();
-  };
-
-  const importBackup = async (file: File) => {
-    const res = await dbService.importFullBackupZip(file);
-    if (res.success) {
-      await loadData();
+    if (currentUser?.id) {
+      await loadData(currentUser.id);
     }
-    return res;
   };
 
-  const saveScreenshotBlob = async (key: string, blob: Blob) => {
-    await dbService.saveScreenshotBlob(key, blob);
+  const exportBackup = async (): Promise<Blob> => {
+    if (!currentUser) throw new Error('User not logged in');
+    const fullData = await dbService.exportFullData(currentUser.id);
+    const jsonStr = JSON.stringify(fullData, null, 2);
+    return new Blob([jsonStr], { type: 'application/json' });
   };
 
-  const getScreenshotBlob = async (key: string) => {
-    return await dbService.getScreenshotBlob(key);
+  const importBackup = async (file: File): Promise<{ success: boolean; message: string }> => {
+    if (!currentUser) return { success: false, message: 'User not logged in' };
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      await dbService.importFullData(data, currentUser.id);
+      await refreshData();
+      return { success: true, message: 'Data imported successfully!' };
+    } catch (err: any) {
+      return { success: false, message: `Import failed: ${err.message}` };
+    }
   };
+
+  const saveScreenshotBlob = async (key: string, blob: Blob): Promise<string> => {
+    return await dbService.saveScreenshotBlob(key, blob);
+  };
+
+  const getScreenshotUrl = async (key: string): Promise<string | null> => {
+    return await dbService.getScreenshotUrl(key);
+  };
+
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={(session) => setCurrentUser(session)} />;
+  }
 
   return (
     <JournalContext.Provider value={{
+      currentUser,
       accounts,
       setups,
       trades,
@@ -300,10 +373,11 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
       tags,
       settings,
       autosaveStatus,
-      storageStatus,
+      storageStatus: { usageMB: 'Cloud', quotaMB: 'Unlimited', isPersisted: true },
       filters,
       isLoading,
       notification,
+      logout,
       setFilters,
       resetFilters,
       showNotification,
@@ -319,7 +393,7 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
       exportBackup,
       importBackup,
       saveScreenshotBlob,
-      getScreenshotBlob
+      getScreenshotUrl
     }}>
       {children}
     </JournalContext.Provider>

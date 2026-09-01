@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useJournal } from '../context/JournalContext';
-import { Trade, TradeExit, TradeChecklistSnapshotItem, EmotionType, ScreenshotCategory, TradeScreenshot } from '../types';
+import { Trade, TradeExit, TradeChecklistSnapshotItem, ScreenshotCategory, TradeScreenshot } from '../types';
 import { calculateRiskAndPositionSize, calculateMultiExitResults } from '../utils/calculations';
 import { validateTrade } from '../utils/validation';
 import { PageId } from '../components/layout/Sidebar';
@@ -23,18 +23,18 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const [direction, setDirection] = useState<'Long' | 'Short'>(existingTrade?.direction || 'Long');
   const [status, setStatus] = useState<any>(existingTrade?.status || 'Open');
   const [date, setDate] = useState<string>(existingTrade?.date || new Date().toISOString().split('T')[0]);
-  const [time, setTime] = useState<string>(existingTrade?.time || new Date().toTimeString().slice(0, 5));
+  const [time] = useState<string>(existingTrade?.time || new Date().toTimeString().slice(0, 5));
   const [session, setSession] = useState<any>(existingTrade?.session || 'London');
-  const [timeframe, setTimeframe] = useState<string>(existingTrade?.timeframe || '15m');
-  const [marketCondition, setMarketCondition] = useState<string>(existingTrade?.marketCondition || 'Trending');
+  const [timeframe] = useState<string>(existingTrade?.timeframe || '15m');
+  const [marketCondition] = useState<string>(existingTrade?.marketCondition || 'Trending');
   const [tagInput, setTagInput] = useState<string>('');
   const [tags, setTags] = useState<string[]>(existingTrade?.tags || []);
 
-  // Planned & Risk Sizing State
+  // Planned & Risk Sizing State (riskPercent fixed/defaulted behind scenes)
   const [entryPrice, setEntryPrice] = useState<number>(existingTrade?.planned?.entry || 1.0850);
   const [stopLossPrice, setStopLossPrice] = useState<number>(existingTrade?.planned?.stopLoss || 1.0830);
   const [takeProfitPrice, setTakeProfitPrice] = useState<number>(existingTrade?.planned?.takeProfit || 1.0910);
-  const [riskPercent, setRiskPercent] = useState<number>(existingTrade?.planned?.riskPercent || settings.defaultRiskPercent || 1.0);
+  const riskPercent = existingTrade?.planned?.riskPercent || settings.defaultRiskPercent || 1.0;
 
   // Partial Exits
   const [exits, setExits] = useState<TradeExit[]>(existingTrade?.exits || [
@@ -44,32 +44,17 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   // Checklist Snapshot State
   const [checklistItems, setChecklistItems] = useState<TradeChecklistSnapshotItem[]>([]);
 
-  // Psychology State
-  const [preTradeEmotion, setPreTradeEmotion] = useState<EmotionType>(existingTrade?.psychology?.preTradeEmotion || 'Calm');
-  const [confidenceRating, setConfidenceRating] = useState<number>(existingTrade?.psychology?.confidenceRating || 8);
-  const [focusRating, setFocusRating] = useState<number>(existingTrade?.psychology?.focusRating || 8);
-  const [stressRating, setStressRating] = useState<number>(existingTrade?.psychology?.stressRating || 3);
-  const [patienceRating, setPatienceRating] = useState<number>(existingTrade?.psychology?.patienceRating || 8);
-  const [energyRating, setEnergyRating] = useState<number>(existingTrade?.psychology?.energyRating || 8);
-
-  // Journal Thesis & Reflections
+  // Thesis & Single Screenshot (merged in Trade Info step 1)
   const [thesis, setThesis] = useState<string>(existingTrade?.journal?.thesis || '');
-  const [whatWentWell, setWhatWentWell] = useState<string>(existingTrade?.journal?.whatWentWell || '');
-  const [whatWentWrong, setWhatWentWrong] = useState<string>(existingTrade?.journal?.whatWentWrong || '');
-  const [lessonsLearned, setLessonsLearned] = useState<string>(existingTrade?.journal?.lessonsLearned || '');
-  const [violations, setViolations] = useState<string[]>(existingTrade?.violations || []);
+  const [screenshot, setScreenshot] = useState<{ id: string; category: ScreenshotCategory; caption: string; file?: File; previewUrl?: string } | null>(
+    existingTrade?.screenshots && existingTrade.screenshots.length > 0
+      ? { id: existingTrade.screenshots[0].id, category: existingTrade.screenshots[0].category, caption: existingTrade.screenshots[0].caption, previewUrl: existingTrade.screenshots[0].previewUrl }
+      : null
+  );
 
-  // Quality Scores
-  const [qualitySetup, setQualitySetup] = useState<number>(existingTrade?.qualityScores?.setup || 8);
-  const [qualityExecution, setQualityExecution] = useState<number>(existingTrade?.qualityScores?.execution || 8);
-  const [qualityRiskMgmt, setQualityRiskMgmt] = useState<number>(existingTrade?.qualityScores?.riskManagement || 8);
-  const [qualityPsychology, setQualityPsychology] = useState<number>(existingTrade?.qualityScores?.psychology || 8);
-  const [qualityDiscipline, setQualityDiscipline] = useState<number>(existingTrade?.qualityScores?.discipline || 8);
+  const [violations] = useState<string[]>(existingTrade?.violations || []);
 
-  // Screenshots
-  const [screenshots, setScreenshots] = useState<{ id: string; category: ScreenshotCategory; caption: string; file?: File; previewUrl?: string }[]>([]);
-
-  // Sync checklist from setup when setupId changes (unless editing an existing trade with saved snapshot)
+  // Sync checklist from setup when setupId changes
   useEffect(() => {
     if (existingTrade && existingTrade.checklistSnapshot) {
       setChecklistItems(existingTrade.checklistSnapshot.items || []);
@@ -81,7 +66,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
           name: item.name,
           description: item.description,
           required: item.required,
-          checked: true, // Default checked
+          checked: true,
           order: item.order
         })));
       }
@@ -111,9 +96,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const adherencePercent = totalChecklistCount > 0 ? Math.round((completedChecklistCount / totalChecklistCount) * 100) : 100;
   const missingRequired = checklistItems.filter(i => i.required && !i.checked);
 
-  // Calculate overall quality score (1-10 scale)
-  const overallQuality = Number(((qualitySetup + qualityExecution + qualityRiskMgmt + qualityPsychology + qualityDiscipline) / 5).toFixed(1));
-
   // Add Tag handler
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -122,39 +104,37 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     }
   };
 
-  // Screenshot Upload handler
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, category: ScreenshotCategory) => {
+  // Single Screenshot Upload handler
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const previewUrl = URL.createObjectURL(file);
-      const newScreen = {
-        id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        category,
+      setScreenshot({
+        id: `img_${Date.now()}`,
+        category: 'Before Entry',
         caption: file.name,
         file,
         previewUrl
-      };
-      setScreenshots(prev => [...prev, newScreen]);
+      });
     }
   };
 
   // Save Trade Execution
   const handleSaveTrade = async (isDraft: boolean = false) => {
-    // 1. Save Screenshot blobs to IndexedDB
+    // Save single screenshot blob to IndexedDB if present
     const savedScreenshots: TradeScreenshot[] = [];
-    for (let i = 0; i < screenshots.length; i++) {
-      const s = screenshots[i];
-      const storageKey = s.id;
-      if (s.file) {
-        await saveScreenshotBlob(storageKey, s.file);
+    if (screenshot) {
+      const storageKey = screenshot.id;
+      if (screenshot.file) {
+        await saveScreenshotBlob(storageKey, screenshot.file);
       }
       savedScreenshots.push({
-        id: s.id,
+        id: screenshot.id,
         tradeId,
-        category: s.category,
-        caption: s.caption,
+        category: screenshot.category,
+        caption: screenshot.caption,
         storageKey,
-        order: i + 1,
+        order: 1,
         createdAt: new Date().toISOString()
       });
     }
@@ -207,7 +187,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         rMultiple: status === 'Closed' ? exitCalc.totalRealizedR : 0
       },
 
-      // IMMUTABLE CHECKLIST SNAPSHOT
       checklistSnapshot: {
         total: totalChecklistCount,
         completed: completedChecklistCount,
@@ -216,36 +195,36 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       },
 
       psychology: {
-        preTradeEmotion,
-        confidenceRating,
-        focusRating,
-        stressRating,
-        patienceRating,
-        energyRating
+        preTradeEmotion: 'Calm',
+        confidenceRating: 8,
+        focusRating: 8,
+        stressRating: 3,
+        patienceRating: 8,
+        energyRating: 8
       },
 
       qualityScores: {
-        setup: qualitySetup,
-        execution: qualityExecution,
-        riskManagement: qualityRiskMgmt,
-        psychology: qualityPsychology,
-        discipline: qualityDiscipline,
-        overall: overallQuality
+        setup: 8,
+        execution: 8,
+        riskManagement: 8,
+        psychology: 8,
+        discipline: 8,
+        overall: 8
       },
 
       violations,
       screenshots: savedScreenshots,
       journal: {
         thesis,
-        whatWentWell,
-        whatWentWrong,
+        whatWentWell: '',
+        whatWentWrong: '',
         followedPlan: missingRequired.length === 0 ? 'Yes' : 'Partially',
         interferedDuringTrade: false,
-        movedStopLoss: violations.includes('Moved Stop Loss'),
-        closedEarly: violations.includes('Closed Early'),
-        hesitatedOnEntry: violations.includes('Hesitated on Entry'),
-        revengeOrOvertraded: violations.includes('Revenge Trade'),
-        lessonsLearned,
+        movedStopLoss: false,
+        closedEarly: false,
+        hesitatedOnEntry: false,
+        revengeOrOvertraded: false,
+        lessonsLearned: '',
         whatToDoDifferently: ''
       },
 
@@ -265,7 +244,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     }
 
     await saveTrade(newTradeRecord);
-    onNavigate('trades');
+    onNavigate('calendar');
   };
 
   return (
@@ -277,9 +256,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
           { step: 2, name: '2. Setup Checklist' },
           { step: 3, name: '3. Risk & Sizing' },
           { step: 4, name: '4. Partial Exits' },
-          { step: 5, name: '5. Psychology' },
-          { step: 6, name: '6. Thesis & Media' },
-          { step: 7, name: '7. Review & Save' }
+          { step: 5, name: '5. Review & Save' }
         ].map(s => (
           <button
             key={s.step}
@@ -293,10 +270,10 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         ))}
       </div>
 
-      {/* STEP 1: TRADE INFO */}
+      {/* STEP 1: TRADE INFO (Integrated Metadata, Thesis & Screenshot) */}
       {activeStep === 1 && (
-        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Identification & Metadata</h3>
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-6">
+          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Identification & Details</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -422,6 +399,45 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               </div>
             )}
           </div>
+
+          {/* Trade Thesis */}
+          <div className="border-t border-slate-100 pt-4">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Trade Thesis ("Why did I take this trade?")</label>
+            <textarea
+              rows={3}
+              value={thesis}
+              onChange={e => setThesis(e.target.value)}
+              placeholder="Detail market structure, confluence factors, key levels..."
+              className="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
+            />
+          </div>
+
+          {/* Single Screenshot Upload */}
+          <div className="border-t border-slate-100 pt-4">
+            <label className="block text-xs font-semibold text-slate-700 mb-2">Trade Chart Screenshot</label>
+            
+            {screenshot ? (
+              <div className="relative max-w-sm bg-slate-50 p-2 rounded border border-slate-200 text-xs space-y-1">
+                <img src={screenshot.previewUrl} alt="Chart Screenshot" className="w-full h-40 object-cover rounded" />
+                <div className="text-[10px] font-bold text-slate-700 truncate">{screenshot.caption}</div>
+                <button
+                  type="button"
+                  onClick={() => setScreenshot(null)}
+                  className="absolute top-3 right-3 bg-slate-900/80 hover:bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <label className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium rounded cursor-pointer transition-colors border border-slate-200">
+                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Upload Chart Screenshot</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+              </label>
+            )}
+          </div>
         </div>
       )}
 
@@ -485,12 +501,12 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         </div>
       )}
 
-      {/* STEP 3: RISK & POSITION SIZING CALCULATOR */}
+      {/* STEP 3: RISK & POSITION SIZING CALCULATOR (Risk percent input removed) */}
       {activeStep === 3 && (
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Plan & Position Sizing Calculator</h3>
+          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Plan & Position Sizing</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Planned Entry *</label>
               <input
@@ -523,18 +539,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 required
                 value={takeProfitPrice}
                 onChange={e => setTakeProfitPrice(parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Risk Percent (%) *</label>
-              <input
-                type="number"
-                step="0.1"
-                required
-                value={riskPercent}
-                onChange={e => setRiskPercent(parseFloat(e.target.value) || 0)}
                 className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
               />
             </div>
@@ -673,133 +677,12 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         </div>
       )}
 
-      {/* STEP 5: PSYCHOLOGY & QUALITY RATINGS */}
+      {/* STEP 5: REVIEW & SAVE */}
       {activeStep === 5 && (
-        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-6">
-          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Psychological State & Independent Quality Scoring</h3>
-          
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-2">Pre-Trade Emotional State</label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                'Calm', 'Confident', 'Neutral', 'Nervous', 'Fearful',
-                'Greedy', 'Angry', 'Frustrated', 'Excited', 'FOMO',
-                'Revenge', 'Bored', 'Overconfident', 'Tired', 'Distracted'
-              ].map(em => (
-                <button
-                  key={em}
-                  type="button"
-                  onClick={() => setPreTradeEmotion(em as EmotionType)}
-                  className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
-                    preTradeEmotion === em ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  {em}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 1-10 Ratings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Confidence Rating (1 - 10): {confidenceRating}</label>
-              <input
-                type="range" min="1" max="10" value={confidenceRating}
-                onChange={e => setConfidenceRating(parseInt(e.target.value))}
-                className="w-full accent-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Focus Rating (1 - 10): {focusRating}</label>
-              <input
-                type="range" min="1" max="10" value={focusRating}
-                onChange={e => setFocusRating(parseInt(e.target.value))}
-                className="w-full accent-slate-900"
-              />
-            </div>
-          </div>
-
-          {/* Quality Scores (1-10 Scale) */}
-          <div className="border-t border-slate-100 pt-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-slate-900 uppercase">Process Quality Scores (1-10 Scale)</h4>
-              <div className="text-xs font-mono font-bold text-slate-900">Overall: {overallQuality} / 10</div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Setup Quality: {qualitySetup}/10</label>
-                <input type="range" min="1" max="10" value={qualitySetup} onChange={e => setQualitySetup(parseInt(e.target.value))} className="w-full accent-slate-900" />
-              </div>
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Execution Quality: {qualityExecution}/10</label>
-                <input type="range" min="1" max="10" value={qualityExecution} onChange={e => setQualityExecution(parseInt(e.target.value))} className="w-full accent-slate-900" />
-              </div>
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Risk Mgmt Quality: {qualityRiskMgmt}/10</label>
-                <input type="range" min="1" max="10" value={qualityRiskMgmt} onChange={e => setQualityRiskMgmt(parseInt(e.target.value))} className="w-full accent-slate-900" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 6: THESIS & SCREENSHOT MEDIA */}
-      {activeStep === 6 && (
-        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Trade Thesis & Chart Screenshots</h3>
-          
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Trade Thesis ("Why did I take this trade?")</label>
-            <textarea
-              rows={3}
-              value={thesis}
-              onChange={e => setThesis(e.target.value)}
-              placeholder="Detail market structure, confluence factors, key levels..."
-              className="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
-            />
-          </div>
-
-          <div className="border-t border-slate-100 pt-3">
-            <label className="block text-xs font-semibold text-slate-700 mb-2">Upload Screenshots (Saved locally in IndexedDB)</label>
-            
-            <div className="flex gap-2 mb-3">
-              {['HTF', 'Before Entry', 'During Trade', 'Exit'].map(cat => (
-                <label key={cat} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded cursor-pointer">
-                  + Add {cat} Image
-                  <input type="file" accept="image/*" className="hidden" onChange={e => handleFileUpload(e, cat as ScreenshotCategory)} />
-                </label>
-              ))}
-            </div>
-
-            {/* Screenshots list */}
-            {screenshots.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {screenshots.map((s, idx) => (
-                  <div key={idx} className="relative bg-slate-50 p-2 rounded border border-slate-200 text-xs space-y-1">
-                    <img src={s.previewUrl} alt={s.category} className="w-full h-24 object-cover rounded" />
-                    <div className="text-[10px] font-bold text-slate-700">{s.category}</div>
-                    <button
-                      onClick={() => setScreenshots(screenshots.filter((_, i) => i !== idx))}
-                      className="absolute top-3 right-3 bg-slate-900/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* STEP 7: REVIEW & SAVE */}
-      {activeStep === 7 && (
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-6">
           <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Final Review & Confirmation</h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs bg-slate-50 p-4 rounded border border-slate-200">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs bg-slate-50 p-4 rounded border border-slate-200">
             <div>
               <div className="text-slate-400">Symbol / Direction</div>
               <div className="font-bold text-slate-900 font-mono">{symbol} ({direction})</div>
@@ -811,10 +694,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
             <div>
               <div className="text-slate-400">Planned R:R</div>
               <div className="font-bold text-emerald-600 font-mono">1 : {riskCalc.plannedRR}</div>
-            </div>
-            <div>
-              <div className="text-slate-400">Quality Score</div>
-              <div className="font-bold text-slate-900 font-mono">{overallQuality} / 10</div>
             </div>
           </div>
 
@@ -849,8 +728,8 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         </button>
         <button
           type="button"
-          disabled={activeStep === 7}
-          onClick={() => setActiveStep(prev => Math.min(7, prev + 1))}
+          disabled={activeStep === 5}
+          onClick={() => setActiveStep(prev => Math.min(5, prev + 1))}
           className="px-4 py-2 bg-slate-900 text-white rounded text-xs font-medium hover:bg-slate-800 disabled:opacity-50"
         >
           Next Step
@@ -859,3 +738,5 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     </div>
   );
 };
+
+export default NewTrade;

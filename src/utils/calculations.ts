@@ -1,4 +1,4 @@
-import { Trade, TradeExit, Account } from '../types';
+import { Trade, TradeExit } from '../types';
 
 export interface PositionCalculationParams {
   entry: number;

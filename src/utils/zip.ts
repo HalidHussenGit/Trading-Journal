@@ -92,7 +92,7 @@ export class SimpleZip {
 
     parts.push(eocd);
 
-    return new Blob(parts, { type: 'application/zip' });
+    return new Blob(parts as any[], { type: 'application/zip' });
   }
 }
 

@@ -9,22 +9,25 @@ interface LazyImageProps {
 }
 
 export const LazyImage: React.FC<LazyImageProps> = ({ storageKey, alt, className = '', onClick }) => {
-  const { getScreenshotBlob } = useJournal();
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const { getScreenshotUrl } = useJournal();
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
-    let url: string | null = null;
 
-    const loadBlob = async () => {
+    const loadImage = async () => {
       try {
         setLoading(true);
-        const blob = await getScreenshotBlob(storageKey);
-        if (blob && isMounted) {
-          url = URL.createObjectURL(blob);
-          setObjectUrl(url);
+        if (storageKey.startsWith('data:')) {
+          if (isMounted) setImageUrl(storageKey);
+          return;
+        }
+
+        const url = await getScreenshotUrl(storageKey);
+        if (url && isMounted) {
+          setImageUrl(url);
         } else if (isMounted) {
           setError(true);
         }
@@ -35,13 +38,10 @@ export const LazyImage: React.FC<LazyImageProps> = ({ storageKey, alt, className
       }
     };
 
-    loadBlob();
+    loadImage();
 
     return () => {
       isMounted = false;
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
     };
   }, [storageKey]);
 
@@ -53,7 +53,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({ storageKey, alt, className
     );
   }
 
-  if (error || !objectUrl) {
+  if (error || !imageUrl) {
     return (
       <div className={`flex items-center justify-center bg-slate-100 text-slate-400 text-xs ${className}`}>
         Image unavailable
@@ -63,7 +63,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({ storageKey, alt, className
 
   return (
     <img
-      src={objectUrl}
+      src={imageUrl}
       alt={alt}
       className={`${className} cursor-pointer hover:opacity-95 transition-opacity`}
       onClick={onClick}

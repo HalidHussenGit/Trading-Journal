@@ -1,4 +1,4 @@
-import { Account, Setup, Trade, TradingDay, Settings } from '../types';
+import { Account, Setup, Trade } from '../types';
 
 export interface ValidationResult {
   isValid: boolean;

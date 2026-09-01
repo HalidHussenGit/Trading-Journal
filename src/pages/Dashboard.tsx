@@ -8,8 +8,8 @@ interface DashboardProps {
   onNavigate: (page: PageId, tradeId?: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
-  const { trades, accounts, setups, filters, setFilters, tradingDays } = useJournal();
+export const Dashboard: React.FC<DashboardProps> = () => {
+  const { trades, accounts, setups, filters, setFilters } = useJournal();
 
   // Filter trades based on active header filters
   const filteredTrades = trades.filter(t => {
@@ -105,7 +105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {/* Net P&L */}
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Net P&L</div>
@@ -128,25 +128,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Profit Factor */}
+        {/* Risk to Reward Ratio */}
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Profit Factor</div>
+          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Risk to Reward</div>
           <div className="text-lg font-bold font-mono text-slate-900 mt-1">
-            {metrics.hasEnoughData ? metrics.profitFactor : 'N/A'}
+            {metrics.hasEnoughData ? (metrics.avgR >= 0 ? `1 : ${metrics.avgR || '1.0'}` : `1 : 0`) : 'N/A'}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
-            Avg Win: <span className="text-emerald-600">${metrics.avgWinPL}</span>
-          </div>
-        </div>
-
-        {/* Expectancy */}
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Expectancy / Trade</div>
-          <div className="text-lg font-bold font-mono text-slate-900 mt-1">
-            {metrics.hasEnoughData ? `${metrics.expectancyR >= 0 ? '+' : ''}${metrics.expectancyR}R` : 'N/A'}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            ${metrics.expectancy} per trade
+            Avg R: <span className="font-mono font-semibold text-slate-700">{metrics.avgR >= 0 ? '+' : ''}{metrics.avgR}R</span>
           </div>
         </div>
 

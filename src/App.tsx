@@ -27,13 +27,13 @@ export const AppContent: React.FC = () => {
 
   const pageTitles: Record<PageId, string> = {
     dashboard: 'Dashboard',
-    calendar: 'Trading Calendar',
+    calendar: 'Trading Calendar & Journal',
     accounts: 'Accounts',
     setups: 'Setups & Checklists',
     'new-trade': 'New Trade Log',
     trades: 'Trades Log',
     'trade-detail': 'Trade Detail View',
-    'daily-journal': 'Daily Journal',
+    'daily-journal': 'Trading Calendar & Journal',
     analytics: 'Analytics Engine',
     risk: 'Risk Management Center',
     settings: 'Settings',
@@ -48,13 +48,12 @@ export const AppContent: React.FC = () => {
         <Header onNavigate={handleNavigate} title={pageTitles[activePage]} />
         <main className="flex-1 overflow-y-auto bg-slate-100/60">
           {activePage === 'dashboard' && <Dashboard onNavigate={handleNavigate} />}
-          {activePage === 'calendar' && <DailyJournal />}
+          {(activePage === 'calendar' || activePage === 'daily-journal') && <DailyJournal />}
           {activePage === 'accounts' && <Accounts />}
           {activePage === 'setups' && <Setups />}
           {activePage === 'new-trade' && <NewTrade onNavigate={handleNavigate} />}
           {activePage === 'trades' && <Trades onNavigate={handleNavigate} />}
           {activePage === 'trade-detail' && <TradeDetail tradeId={activeTradeId} onNavigate={handleNavigate} />}
-          {activePage === 'daily-journal' && <DailyJournal />}
           {activePage === 'analytics' && <Analytics />}
           {activePage === 'risk' && <RiskManagement />}
           {activePage === 'settings' && <SettingsPage />}

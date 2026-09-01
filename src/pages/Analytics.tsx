@@ -3,8 +3,8 @@ import { useJournal } from '../context/JournalContext';
 import { calculatePortfolioMetrics, calculateAdherenceBuckets } from '../utils/calculations';
 
 export const Analytics: React.FC = () => {
-  const { trades, accounts, setups } = useJournal();
-  const [activeTab, setActiveTab] = useState<'overview' | 'setups' | 'adherence' | 'psychology' | 'violations' | 'sessions'>('overview');
+  const { trades, setups } = useJournal();
+  const [activeTab, setActiveTab] = useState<'overview' | 'setups' | 'adherence' | 'violations' | 'sessions'>('overview');
 
   const closedTrades = trades.filter(t => t.status === 'Closed' && !t.isArchived);
   const metrics = calculatePortfolioMetrics(closedTrades);
@@ -18,9 +18,8 @@ export const Analytics: React.FC = () => {
           { id: 'overview', label: '1. Overall Metrics' },
           { id: 'setups', label: '2. By Setup & Account' },
           { id: 'adherence', label: '3. Checklist Adherence' },
-          { id: 'psychology', label: '4. Psychology Matrix' },
-          { id: 'violations', label: '5. Rule Violations' },
-          { id: 'sessions', label: '6. Sessions & Weekdays' }
+          { id: 'violations', label: '4. Rule Violations' },
+          { id: 'sessions', label: '5. Sessions & Weekdays' }
         ].map(tab => (
           <button
             key={tab.id}

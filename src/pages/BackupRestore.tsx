@@ -1,27 +1,25 @@
 import React, { useState } from 'react';
 import { useJournal } from '../context/JournalContext';
-import { ConfirmDialog } from '../components/common/ConfirmDialog';
 
 export const BackupRestore: React.FC = () => {
   const { exportBackup, importBackup, showNotification, refreshData, saveAccount, saveSetup, saveTrade } = useJournal();
   
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [isConfirmingClear, setIsConfirmingClear] = useState(false);
 
-  const handleExportZip = async () => {
+  const handleExportJson = async () => {
     try {
       setIsExporting(true);
-      const zipBlob = await exportBackup();
-      const url = URL.createObjectURL(zipBlob);
+      const blob = await exportBackup();
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Ayzoh_Enji_Trading_Journal_Backup_${new Date().toISOString().split('T')[0]}.zip`;
+      a.download = `Ayzoh_Enji_Trading_Journal_Backup_${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showNotification('success', 'Full ZIP backup archive exported successfully!');
+      showNotification('success', 'Supabase snapshot exported successfully!');
     } catch (err: any) {
       showNotification('error', `Export error: ${err.message}`);
     } finally {
@@ -36,7 +34,7 @@ export const BackupRestore: React.FC = () => {
         setIsImporting(true);
         const res = await importBackup(file);
         if (res.success) {
-          showNotification('success', 'Backup restored successfully!');
+          showNotification('success', 'Backup restored to Supabase successfully!');
         } else {
           showNotification('error', res.message);
         }
@@ -52,7 +50,7 @@ export const BackupRestore: React.FC = () => {
   const handleLoadDemoData = async () => {
     try {
       const demoAccount = {
-        id: 'acc_demo_01',
+        id: crypto.randomUUID(),
         name: 'Prop Account – $10,000 (Demo)',
         brokerOrFirm: 'FTMO',
         accountType: 'PropFirm' as const,
@@ -71,7 +69,7 @@ export const BackupRestore: React.FC = () => {
       await saveAccount(demoAccount);
 
       const demoSetup = {
-        id: 'setup_demo_01',
+        id: crypto.randomUUID(),
         name: 'London Breakout',
         description: 'London open momentum breakout setup',
         market: 'Forex',
@@ -87,16 +85,11 @@ export const BackupRestore: React.FC = () => {
         rules: ['Trade only during London session', 'Minimum 2R target'],
         invalidConditions: ['High Impact News within 15m'],
         checklist: [
-          { id: 'chk_1', setupId: 'setup_demo_01', name: 'HTF Trend Alignment', description: '4h/Daily bias matches trade', required: true, order: 1, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_2', setupId: 'setup_demo_01', name: 'Key Support / Resistance Hit', description: 'Price reacting to key level', required: true, order: 2, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_3', setupId: 'setup_demo_01', name: 'Asian Range Liquidity Swept', description: 'Asian high or low taken out', required: true, order: 3, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_4', setupId: 'setup_demo_01', name: 'LTF Market Structure Break', description: '1m/5m displacement break', required: true, order: 4, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_5', setupId: 'setup_demo_01', name: 'Fair Value Gap / Order Block Entry', description: 'Price retraced into FVG', required: false, order: 5, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_6', setupId: 'setup_demo_01', name: 'No High Impact News Next 30m', description: 'Economic calendar clear', required: true, order: 6, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_7', setupId: 'setup_demo_01', name: 'Clean Risk:Reward >= 2R', description: 'SL behind swing level', required: true, order: 7, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_8', setupId: 'setup_demo_01', name: 'Position Size within Limits', description: 'Risk <= 1%', required: true, order: 8, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_9', setupId: 'setup_demo_01', name: 'Calm Emotional State', description: 'Not revenge or FOMO', required: false, order: 9, active: true, createdAt: '', updatedAt: '' },
-          { id: 'chk_10', setupId: 'setup_demo_01', name: 'Execution during Session Hours', description: 'Inside London Window', required: true, order: 10, active: true, createdAt: '', updatedAt: '' }
+          { id: crypto.randomUUID(), setupId: '', name: 'HTF Trend Alignment', description: '4h/Daily bias matches trade', required: true, order: 1, active: true, createdAt: '', updatedAt: '' },
+          { id: crypto.randomUUID(), setupId: '', name: 'Key Support / Resistance Hit', description: 'Price reacting to key level', required: true, order: 2, active: true, createdAt: '', updatedAt: '' },
+          { id: crypto.randomUUID(), setupId: '', name: 'Asian Range Liquidity Swept', description: 'Asian high or low taken out', required: true, order: 3, active: true, createdAt: '', updatedAt: '' },
+          { id: crypto.randomUUID(), setupId: '', name: 'LTF Market Structure Break', description: '1m/5m displacement break', required: true, order: 4, active: true, createdAt: '', updatedAt: '' },
+          { id: crypto.randomUUID(), setupId: '', name: 'Fair Value Gap / Order Block Entry', description: 'Price retraced into FVG', required: false, order: 5, active: true, createdAt: '', updatedAt: '' }
         ],
         notes: '',
         status: 'Active' as const,
@@ -106,13 +99,13 @@ export const BackupRestore: React.FC = () => {
       await saveSetup(demoSetup);
 
       const demoTrade1 = {
-        id: 'trade_001',
-        accountId: 'acc_demo_01',
-        setupId: 'setup_demo_01',
+        id: crypto.randomUUID(),
+        accountId: demoAccount.id,
+        setupId: demoSetup.id,
         symbol: 'EURUSD',
         direction: 'Long' as const,
         status: 'Closed' as const,
-        date: '2026-08-29',
+        date: new Date().toISOString().split('T')[0],
         time: '08:30',
         session: 'London' as const,
         timeframe: '15m',
@@ -134,7 +127,7 @@ export const BackupRestore: React.FC = () => {
           fees: 0, commission: 0, swap: 0, slippage: 0, exitReason: 'TP Hit'
         },
         exits: [
-          { id: 'ex_1', levelName: 'TP1', exitPrice: 106, sizePercent: 100, realizedPL: 300, realizedR: 3, exitReason: 'Target Reached', timestamp: new Date().toISOString() }
+          { id: crypto.randomUUID(), levelName: 'TP1', exitPrice: 106, sizePercent: 100, realizedPL: 300, realizedR: 3, exitReason: 'Target Reached', timestamp: new Date().toISOString() }
         ],
         result: {
           status: 'Win' as const,
@@ -143,15 +136,15 @@ export const BackupRestore: React.FC = () => {
           rMultiple: 3
         },
         checklistSnapshot: {
-          total: 10,
-          completed: 7,
-          adherencePercent: 70,
+          total: 5,
+          completed: 4,
+          adherencePercent: 80,
           items: demoSetup.checklist.map((item, idx) => ({
             id: item.id,
             name: item.name,
             description: item.description,
             required: item.required,
-            checked: idx < 7,
+            checked: idx < 4,
             order: item.order
           }))
         },
@@ -185,7 +178,7 @@ export const BackupRestore: React.FC = () => {
       };
       await saveTrade(demoTrade1);
       await refreshData();
-      showNotification('success', 'Sample acceptance test dataset loaded successfully!');
+      showNotification('success', 'Sample demo data loaded into Supabase successfully!');
     } catch (err: any) {
       showNotification('error', `Demo loader error: ${err.message}`);
     }
@@ -195,23 +188,23 @@ export const BackupRestore: React.FC = () => {
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs space-y-6">
         <div className="border-b border-slate-100 pb-3">
-          <h2 className="text-base font-bold text-slate-900">Backup, Restore & Data Management</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Export full portable ZIP archives containing JSON records and screenshot files.</p>
+          <h2 className="text-base font-bold text-slate-900">Backup, Snapshot & Data Management</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Export portable JSON snapshots of your Supabase records or restore previous backups.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Export Card */}
           <div className="p-5 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
-            <h3 className="text-xs font-bold text-slate-900 uppercase">Export Full Backup (.ZIP)</h3>
+            <h3 className="text-xs font-bold text-slate-900 uppercase">Export Supabase Snapshot (.JSON)</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Generates a single ZIP package containing accounts, setups, trades, journal entries, and full-resolution screenshot files.
+              Generates a JSON snapshot containing accounts, setups, trades, journal entries, and trading days for offline archiving.
             </p>
             <button
-              onClick={handleExportZip}
+              onClick={handleExportJson}
               disabled={isExporting}
               className="px-4 py-2 bg-slate-900 text-white rounded text-xs font-medium hover:bg-slate-800 disabled:opacity-50"
             >
-              {isExporting ? 'Packaging ZIP...' : 'Export Backup ZIP'}
+              {isExporting ? 'Exporting...' : 'Export Backup JSON'}
             </button>
           </div>
 
@@ -219,24 +212,24 @@ export const BackupRestore: React.FC = () => {
           <div className="p-5 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
             <h3 className="text-xs font-bold text-slate-900 uppercase">Import Backup Archive</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Restore your trading journal from a previous `.zip` backup file. Runs strict schema validation before overwriting.
+              Restore your trading journal records to Supabase from a previous `.json` backup file.
             </p>
             <label className="inline-block px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded text-xs font-medium hover:bg-slate-50 cursor-pointer">
-              {isImporting ? 'Restoring...' : 'Select Backup ZIP'}
-              <input type="file" accept=".zip" onChange={handleImportFileChange} className="hidden" disabled={isImporting} />
+              {isImporting ? 'Restoring...' : 'Select Backup JSON'}
+              <input type="file" accept=".json" onChange={handleImportFileChange} className="hidden" disabled={isImporting} />
             </label>
           </div>
         </div>
 
         {/* Development & Testing Utilities */}
         <div className="border-t border-slate-100 pt-5 space-y-3">
-          <h3 className="text-xs font-bold text-slate-900 uppercase">Demo & Acceptance Testing Loader</h3>
-          <p className="text-xs text-slate-500">Quickly load the standard acceptance test dataset (Account, London Breakout setup, Trade #1 with 70% adherence).</p>
+          <h3 className="text-xs font-bold text-slate-900 uppercase">Demo Data Generator</h3>
+          <p className="text-xs text-slate-500">Quickly load a sample dataset (Account, London Breakout setup, Trade #1) directly into Supabase.</p>
           <button
             onClick={handleLoadDemoData}
             className="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-medium hover:bg-emerald-800"
           >
-            Load Acceptance Test Demo Data
+            Load Sample Demo Data
           </button>
         </div>
       </div>

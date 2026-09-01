@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
-  const { accounts, filters, setFilters, autosaveStatus, notification } = useJournal();
+  const { currentUser, logout, accounts, filters, setFilters, autosaveStatus, notification } = useJournal();
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-40 shadow-xs">
@@ -53,6 +53,24 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
 
         {/* Autosave Status Indicator */}
         <AutosaveBadge status={autosaveStatus} />
+
+        {/* User Session & Logout */}
+        {currentUser && (
+          <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+            <span className="text-xs font-mono font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
+              @{currentUser.username}
+            </span>
+            <button
+              onClick={logout}
+              title="Sign Out"
+              className="text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors p-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Quick New Trade Action */}
         <button

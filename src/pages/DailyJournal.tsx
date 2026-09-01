@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useJournal } from '../context/JournalContext';
-import { TradingDay, NoTradeReason, EmotionType } from '../types';
+import { TradingDay, NoTradeReason } from '../types';
 import { Modal } from '../components/common/Modal';
 
 export const DailyJournal: React.FC = () => {
