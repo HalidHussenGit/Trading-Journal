@@ -94,63 +94,37 @@ export const TradeDetail: React.FC<TradeDetailProps> = ({ tradeId, onNavigate })
         </div>
       </div>
 
-      {/* Planned vs Actual Comparison Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Planned Parameters */}
-        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
-          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">1. Planned Execution Plan</h3>
-          <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-            <div>
-              <div className="text-slate-400 text-[10px]">Planned Entry</div>
-              <div className="font-bold text-slate-800">{trade.planned?.entry}</div>
-            </div>
-            <div>
-              <div className="text-slate-400 text-[10px]">Planned Stop Loss</div>
-              <div className="font-bold text-slate-800">{trade.planned?.stopLoss}</div>
-            </div>
-            <div>
-              <div className="text-slate-400 text-[10px]">Target Take Profit</div>
-              <div className="font-bold text-slate-800">{trade.planned?.takeProfit}</div>
-            </div>
-            <div>
-              <div className="text-slate-400 text-[10px]">Planned R:R</div>
-              <div className="font-bold text-emerald-600">1 : {trade.planned?.plannedRR}</div>
-            </div>
-            <div>
-              <div className="text-slate-400 text-[10px]">Risk Amount ($)</div>
-              <div className="font-bold text-slate-800">${trade.planned?.riskAmount} ({trade.planned?.riskPercent}%)</div>
-            </div>
-            <div>
-              <div className="text-slate-400 text-[10px]">Planned Profit ($)</div>
-              <div className="font-bold text-emerald-600">${Number(((trade.planned?.riskAmount || 0) * (trade.planned?.plannedRR || 0)).toFixed(2))}</div>
-            </div>
-            <div>
-              <div className="text-slate-400 text-[10px]">Lot Size</div>
-              <div className="font-bold text-slate-800">{trade.planned?.lotSize ?? '—'}</div>
-            </div>
+      {/* Planned Execution Plan */}
+      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
+        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">1. Planned Execution Plan</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
+          <div>
+            <div className="text-slate-400 text-[10px]">Planned Entry</div>
+            <div className="font-bold text-slate-800">{trade.planned?.entry}</div>
           </div>
-        </div>
-
-        {/* Actual Results & Multi-Exits */}
-        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
-          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">2. Actual Realized Execution</h3>
-          
-          <div className="space-y-2">
-            {(!trade.exits || trade.exits.length === 0) ? (
-              <div className="text-xs text-slate-400">Single exit trade execution.</div>
-            ) : (
-              <div className="space-y-1.5">
-                {trade.exits.map((ex, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs p-2 bg-slate-50 rounded border border-slate-100 font-mono">
-                    <span className="font-bold text-slate-800">{ex.levelName} ({ex.sizePercent}%)</span>
-                    <span className="text-slate-600">Price: {ex.exitPrice}</span>
-                    <span className={ex.realizedPL >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-                      {ex.realizedPL >= 0 ? '+' : ''}${ex.realizedPL}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div>
+            <div className="text-slate-400 text-[10px]">Planned Stop Loss</div>
+            <div className="font-bold text-slate-800">{trade.planned?.stopLoss}</div>
+          </div>
+          <div>
+            <div className="text-slate-400 text-[10px]">Target Take Profit</div>
+            <div className="font-bold text-slate-800">{trade.planned?.takeProfit}</div>
+          </div>
+          <div>
+            <div className="text-slate-400 text-[10px]">Planned R:R</div>
+            <div className="font-bold text-emerald-600">1 : {trade.planned?.plannedRR}</div>
+          </div>
+          <div>
+            <div className="text-slate-400 text-[10px]">Risk Amount ($)</div>
+            <div className="font-bold text-slate-800">${trade.planned?.riskAmount} ({trade.planned?.riskPercent}%)</div>
+          </div>
+          <div>
+            <div className="text-slate-400 text-[10px]">Planned Profit ($)</div>
+            <div className="font-bold text-emerald-600">${Number(((trade.planned?.riskAmount || 0) * (trade.planned?.plannedRR || 0)).toFixed(2))}</div>
+          </div>
+          <div>
+            <div className="text-slate-400 text-[10px]">Lot Size</div>
+            <div className="font-bold text-slate-800">{trade.planned?.lotSize ?? '—'}</div>
           </div>
         </div>
       </div>
