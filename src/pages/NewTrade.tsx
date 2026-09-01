@@ -613,8 +613,8 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 <div className="text-sm font-bold text-rose-400">${riskCalc.riskAmount}</div>
               </div>
               <div>
-                <div className="text-slate-400 text-[10px]">Position Size</div>
-                <div className="text-sm font-bold text-emerald-400">{riskCalc.positionSize} units</div>
+                <div className="text-slate-400 text-[10px]">Planned Profit ($)</div>
+                <div className="text-sm font-bold text-emerald-400">${Number((riskCalc.riskAmount * riskCalc.plannedRR).toFixed(2))}</div>
               </div>
             </div>
           </div>
