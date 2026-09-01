@@ -201,7 +201,15 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                       </td>
                       <td className="py-3 px-4 text-right font-sans" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          {t.status !== 'Closed' && (
+                          {t.status === 'Closed' ? (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
+                              isWin ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 
+                              isLoss ? 'bg-rose-100 text-rose-800 border border-rose-200' : 
+                              'bg-slate-100 text-slate-600 border border-slate-200'
+                            }`}>
+                              {t.result?.status || 'Closed'}
+                            </span>
+                          ) : (
                             <button
                               onClick={() => setClosingTrade(t)}
                               className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800 transition-colors"
