@@ -209,6 +209,8 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
   let grossLosses = 0;
   let totalPL = 0;
   let totalR = 0;
+  let winningR = 0;
+  let losingR = 0;
   let largestWinPL = 0;
   let largestLossPL = 0;
 
@@ -247,6 +249,7 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
     if (pl > 0.01) {
       winningCount++;
       grossWins += pl;
+      winningR += r;
       if (pl > largestWinPL) largestWinPL = pl;
 
       currentWins++;
@@ -256,6 +259,7 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
     } else if (pl < -0.01) {
       losingCount++;
       grossLosses += Math.abs(pl);
+      losingR += Math.abs(r);
       if (pl < largestLossPL) largestLossPL = pl;
 
       currentLosses++;
@@ -284,14 +288,15 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
   const winRate = (winningCount / closedTrades.length) * 100;
   const avgWinPL = winningCount > 0 ? grossWins / winningCount : 0;
   const avgLossPL = losingCount > 0 ? grossLosses / losingCount : 0;
-  const avgR = totalR / closedTrades.length;
+  const avgR = winningCount > 0 ? winningR / winningCount : 0;
 
   const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? 999 : 0;
 
   // Expectancy = (WinRate * AvgWin) - (LossRate * AvgLoss)
   const lossRate = (losingCount / closedTrades.length);
   const expectancy = ((winRate / 100) * avgWinPL) - (lossRate * avgLossPL);
-  const expectancyR = ((winRate / 100) * (winningCount > 0 ? totalR / winningCount : 0)) - (lossRate * (losingCount > 0 ? Math.abs(totalR / losingCount) : 0));
+  const avgLossR = losingCount > 0 ? losingR / losingCount : 0;
+  const expectancyR = ((winRate / 100) * avgR) - (lossRate * avgLossR);
 
   const currentDDAmount = peakBalance - currentBalance;
   const currentDDPercent = peakBalance > 0 ? (currentDDAmount / peakBalance) * 100 : 0;
