@@ -152,7 +152,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Net P&L */}
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Net P&L</div>
@@ -183,17 +183,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
             Avg R: <span className="font-mono font-semibold text-slate-700">{metrics.avgR >= 0 ? '+' : ''}{metrics.avgR}R</span>
-          </div>
-        </div>
-
-        {/* Max Drawdown */}
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
-          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Max Drawdown</div>
-          <div className="text-lg font-bold font-mono text-rose-600 mt-1">
-            {metrics.hasEnoughData ? `-${metrics.maxDrawdownPercent}%` : 'N/A'}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            -${metrics.maxDrawdownAmount} max DD
           </div>
         </div>
 
