@@ -12,9 +12,10 @@ interface EquityCurveChartProps {
   data: { date: string; balance: number; rMultiple: number; tradeId: string }[];
   initialBalance: number;
   height?: number;
+  onSelectTrade?: (tradeId: string) => void;
 }
 
-export const EquityCurveChart: React.FC<EquityCurveChartProps> = ({ data, initialBalance, height = 260 }) => {
+export const EquityCurveChart: React.FC<EquityCurveChartProps> = ({ data, initialBalance, height = 260, onSelectTrade }) => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   if (!data || data.length === 0) {
@@ -104,6 +105,11 @@ export const EquityCurveChart: React.FC<EquityCurveChartProps> = ({ data, initia
             strokeWidth={1.5}
             onMouseEnter={() => setHoveredIdx(i)}
             onMouseLeave={() => setHoveredIdx(null)}
+            onClick={() => {
+              if (p.tradeId && p.tradeId !== 'init' && onSelectTrade) {
+                onSelectTrade(p.tradeId);
+              }
+            }}
           />
         ))}
 

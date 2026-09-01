@@ -86,11 +86,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
             <div className="space-y-1.5">
               {draftTrades.slice(0, 4).map(t => (
-                <div key={t.id} className="flex items-center justify-between bg-white rounded border border-amber-200 px-3 py-1.5 text-xs">
-                  <span className="font-mono font-bold text-slate-900">{t.symbol}</span>
+                <div
+                  key={t.id}
+                  onClick={() => onNavigate('trade-detail', t.id)}
+                  className="flex items-center justify-between bg-white rounded border border-amber-200 px-3 py-1.5 text-xs cursor-pointer hover:bg-amber-100/50 transition-colors group"
+                  title="Click to view trade details"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-slate-900 group-hover:text-amber-900">{t.symbol}</span>
+                    <span className="text-[10px] text-amber-600 font-mono underline">View Details →</span>
+                  </div>
                   <span className="text-slate-500">{t.date} · {t.direction} · Entry {t.planned?.entry}</span>
                   <button
-                    onClick={() => setClosingTrade(t)}
+                    onClick={(e) => { e.stopPropagation(); setClosingTrade(t); }}
                     className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800"
                   >
                     Close
@@ -193,7 +201,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             {metrics.hasEnoughData ? `${metrics.avgAdherencePercent}%` : 'N/A'}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
-            Score: <span className="font-semibold text-slate-800">{metrics.overallQualityScore}/10</span>
+            Score: <span className="font-semibold text-slate-800">{metrics.hasEnoughData ? `${metrics.overallQualityScore}/10` : 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -202,7 +210,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Equity Curve (Spans 2 columns) */}
         <div className="lg:col-span-2 bg-white p-5 rounded-lg border border-slate-200 shadow-xs">
-          <EquityCurveChart data={equityPoints} initialBalance={initialBalance} />
+          <EquityCurveChart
+            data={equityPoints}
+            initialBalance={initialBalance}
+            onSelectTrade={(id) => onNavigate('trade-detail', id)}
+          />
         </div>
 
         {/* R Distribution & Streaks */}
@@ -263,6 +275,77 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Recent Trades Activity List */}
+      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Recent Trades Activity</h3>
+          <button
+            onClick={() => onNavigate('trades')}
+            className="text-xs font-medium text-slate-600 hover:text-slate-900 underline"
+          >
+            View All Trades ({filteredTrades.length}) →
+          </button>
+        </div>
+
+        {filteredTrades.length === 0 ? (
+          <div className="text-xs text-slate-400 text-center py-6">No recent trades logged yet.</div>
+        ) : (
+          <div className="space-y-1.5 font-mono">
+            {filteredTrades
+              .slice(0, 5)
+              .map(t => {
+                const isClosed = t.status === 'Closed';
+                const isWin = (t.result?.netPL || 0) > 0;
+                const isLoss = (t.result?.netPL || 0) < 0;
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => onNavigate('trade-detail', t.id)}
+                    className="flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 p-2.5 rounded border border-slate-200 text-xs cursor-pointer transition-colors group"
+                    title="Click to view trade details"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors w-16">{t.symbol}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${t.direction === 'Long' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                        {t.direction}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-sans hidden sm:inline">{t.date} {t.time}</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        t.status === 'Closed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        t.status === 'Draft' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                        'bg-blue-50 text-blue-700 border border-blue-200'
+                      }`}>
+                        {t.status}
+                      </span>
+
+                      {isClosed ? (
+                        <div className="text-right w-28">
+                          <span className={`font-bold ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-500'}`}>
+                            {isWin ? '+' : ''}${t.result?.netPL} ({isWin ? '+' : ''}{t.result?.rMultiple}R)
+                          </span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setClosingTrade(t); }}
+                          className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800"
+                        >
+                          Close Trade
+                        </button>
+                      )}
+
+                      <span className="text-[11px] text-slate-400 group-hover:text-blue-600 font-sans font-medium underline">Details →</span>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
       </div>
       {/* Close Trade Modal */}
       {closingTrade && (

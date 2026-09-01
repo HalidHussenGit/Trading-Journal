@@ -48,7 +48,7 @@ export const AppContent: React.FC = () => {
         <Header onNavigate={handleNavigate} title={pageTitles[activePage]} />
         <main className="flex-1 overflow-y-auto bg-slate-100/60">
           {activePage === 'dashboard' && <Dashboard onNavigate={handleNavigate} />}
-          {(activePage === 'calendar' || activePage === 'daily-journal') && <DailyJournal />}
+          {(activePage === 'calendar' || activePage === 'daily-journal') && <DailyJournal onNavigate={handleNavigate} />}
           {activePage === 'accounts' && <Accounts />}
           {activePage === 'setups' && <Setups />}
           {activePage === 'new-trade' && <NewTrade onNavigate={handleNavigate} />}

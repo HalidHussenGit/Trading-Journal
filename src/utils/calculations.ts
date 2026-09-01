@@ -271,9 +271,10 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
       lastOutcome = 'breakeven';
     }
 
-    if (t.checklistSnapshot?.adherencePercent !== undefined) {
-      totalAdherence += t.checklistSnapshot.adherencePercent;
-    }
+    const adherence = t.checklistSnapshot?.adherencePercent !== undefined
+      ? t.checklistSnapshot.adherencePercent
+      : 100;
+    totalAdherence += adherence;
 
     if (t.qualityScores?.overall) {
       totalQuality += t.qualityScores.overall;
@@ -302,8 +303,10 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
   const currentDDPercent = peakBalance > 0 ? (currentDDAmount / peakBalance) * 100 : 0;
 
   const currentStreak = lastOutcome === 'win' ? currentWins : lastOutcome === 'loss' ? -currentLosses : 0;
-  const avgAdherencePercent = totalAdherence / closedTrades.length;
-  const overallQualityScore = qualityCount > 0 ? totalQuality / qualityCount : 0;
+  const avgAdherencePercent = closedTrades.length > 0 ? totalAdherence / closedTrades.length : 0;
+  const overallQualityScore = (qualityCount > 0 && totalQuality > 0) 
+    ? totalQuality / qualityCount 
+    : (avgAdherencePercent / 10);
 
   return {
     totalTrades: trades.length,
