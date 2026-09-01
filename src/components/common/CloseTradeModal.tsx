@@ -15,26 +15,13 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
 
   const [outcome, setOutcome] = useState<TradeOutcome>('Win');
   const [actualExit, setActualExit] = useState<number>(trade.planned?.takeProfit || trade.planned?.entry || 0);
-  const [netPL, setNetPL] = useState<number>(0);
-  const [rMultiple, setRMultiple] = useState<number>(0);
   const [whatWentWell, setWhatWentWell] = useState<string>(trade.journal?.whatWentWell || '');
   const [whatWentWrong, setWhatWentWrong] = useState<string>(trade.journal?.whatWentWrong || '');
   const [lessonsLearned] = useState<string>(trade.journal?.lessonsLearned || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-compute R-multiple when net P&L changes
-  const handleNetPLChange = (val: number) => {
-    setNetPL(val);
-    if (trade.planned?.riskAmount && trade.planned.riskAmount > 0) {
-      setRMultiple(parseFloat((val / trade.planned.riskAmount).toFixed(2)));
-    }
-  };
-
   const handleOutcomeChange = (o: TradeOutcome) => {
     setOutcome(o);
-    // Flip sign of netPL for loss outcomes
-    if ((o === 'Loss' || o === 'Partial Loss') && netPL > 0) setNetPL(-Math.abs(netPL));
-    if ((o === 'Win' || o === 'Partial Win') && netPL < 0) setNetPL(Math.abs(netPL));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -51,9 +38,9 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
         },
         result: {
           status: outcome,
-          netPL: netPL,
-          grossPL: netPL,
-          rMultiple: rMultiple
+          netPL: 0,
+          grossPL: 0,
+          rMultiple: 0
         },
         journal: {
           ...trade.journal,
@@ -67,14 +54,14 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
             id: '',
             timestamp: new Date().toISOString(),
             type: 'Closed' as const,
-            description: `Trade closed — ${outcome} · ${netPL >= 0 ? '+' : ''}$${netPL} (${rMultiple >= 0 ? '+' : ''}${rMultiple}R)`
+            description: `Trade closed — ${outcome}`
           }
         ],
         updatedAt: new Date().toISOString()
       };
 
       await saveTrade(closedTrade);
-      showNotification('success', `Trade closed as ${outcome} · ${netPL >= 0 ? '+' : ''}$${netPL}`);
+      showNotification('success', `Trade closed as ${outcome}`);
       onClose();
       onClosed?.();
     } catch (err: any) {
@@ -141,7 +128,7 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
         </div>
 
         {/* Actual Numbers */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Actual Exit Price</label>
             <input
@@ -151,35 +138,6 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
               value={actualExit}
               onChange={e => setActualExit(parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Net P&L ($)</label>
-            <input
-              type="number"
-              step="any"
-              required
-              value={netPL}
-              onChange={e => handleNetPLChange(parseFloat(e.target.value) || 0)}
-              className={`w-full px-3 py-1.5 border rounded text-xs font-mono font-bold focus:ring-1 focus:outline-none ${
-                netPL > 0 ? 'border-emerald-300 text-emerald-700 focus:ring-emerald-500' :
-                netPL < 0 ? 'border-rose-300 text-rose-700 focus:ring-rose-500' :
-                'border-slate-300 focus:ring-slate-900'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">R-Multiple</label>
-            <input
-              type="number"
-              step="0.01"
-              value={rMultiple}
-              onChange={e => setRMultiple(parseFloat(e.target.value) || 0)}
-              className={`w-full px-3 py-1.5 border rounded text-xs font-mono font-bold focus:ring-1 focus:outline-none ${
-                rMultiple > 0 ? 'border-emerald-300 text-emerald-700' :
-                rMultiple < 0 ? 'border-rose-300 text-rose-700' :
-                'border-slate-300'
-              }`}
             />
           </div>
         </div>
