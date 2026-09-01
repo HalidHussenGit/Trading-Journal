@@ -109,8 +109,10 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const previewUrl = URL.createObjectURL(file);
+      // Generate a unique key so the storage path is never empty
+      const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       setScreenshot({
-        id: '',
+        id: uniqueId,
         category: 'Before Entry',
         caption: file.name,
         file,
@@ -125,9 +127,11 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const handleSaveTrade = async () => {
     const savedScreenshots: TradeScreenshot[] = [];
     if (screenshot) {
-      const storageKey = screenshot.id;
+      // Use the returned path from saveScreenshotBlob as the authoritative storageKey
+      let storageKey = screenshot.id;
       if (screenshot.file) {
-        await saveScreenshotBlob(storageKey, screenshot.file);
+        const savedPath = await saveScreenshotBlob(screenshot.id, screenshot.file);
+        storageKey = savedPath; // could be a file path or a data: fallback URL
       }
       savedScreenshots.push({
         id: screenshot.id,
@@ -135,6 +139,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
         category: screenshot.category,
         caption: screenshot.caption,
         storageKey,
+        previewUrl: screenshot.previewUrl,
         order: 1,
         createdAt: new Date().toISOString()
       });
