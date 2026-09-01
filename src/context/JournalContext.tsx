@@ -247,7 +247,11 @@ export const JournalProvider: React.FC<{ children: ReactNode }> = ({ children })
       const saved = await dbService.saveTrade(trade, currentUser.id);
       const hydrated = rehydrateTradeResult(saved);
       setTrades(prev => {
-        const idx = prev.findIndex(t => t.id === trade.id || t.id === saved.id);
+        // Only do an in-place update when we have a real UUID to match on.
+        // If trade.id is an empty string (brand-new unsaved trade), we must
+        // never use it as a lookup key — it would match wrongly or create a duplicate.
+        const matchId = saved.id; // always prefer the server-assigned UUID
+        const idx = prev.findIndex(t => t.id === matchId || (trade.id && t.id === trade.id));
         if (idx >= 0) {
           const updated = [...prev];
           updated[idx] = hydrated;
