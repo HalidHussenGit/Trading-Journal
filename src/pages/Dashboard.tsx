@@ -173,7 +173,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             {metrics.hasEnoughData ? `${metrics.winRate}%` : 'N/A'}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
-            W: <span className="text-emerald-600 font-semibold">{metrics.winningTradesCount}</span> · L: <span className="text-rose-600 font-semibold">{metrics.losingTradesCount}</span> · BE: {metrics.breakevenTradesCount}
+            W: <span className="text-emerald-600 font-semibold">{closedTrades.filter(t => t.result?.status === 'Win').length}</span> · PW: <span className="text-teal-600 font-semibold">{closedTrades.filter(t => t.result?.status === 'Partial Win').length}</span> · L: <span className="text-rose-600 font-semibold">{metrics.losingTradesCount}</span> · BE: {metrics.breakevenTradesCount}
           </div>
         </div>
 
