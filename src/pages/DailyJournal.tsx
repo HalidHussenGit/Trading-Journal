@@ -153,22 +153,24 @@ export const DailyJournal: React.FC<DailyJournalProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Quick Backtest Year Selector Bar */}
-        <div className="flex items-center gap-1.5 pt-3 border-t border-slate-100 overflow-x-auto">
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1">Backtest Years:</span>
-          {[2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027].map(y => (
-            <button
-              key={y}
-              onClick={() => setCurrentMonth(new Date(y, month, 1))}
-              className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                year === y
-                  ? 'bg-slate-900 text-white font-bold shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {y}
-            </button>
-          ))}
+        {/* Quick Month Selector Bar */}
+        <div className="pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick Month:</span>
+            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, idx) => (
+              <button
+                key={m}
+                onClick={() => setCurrentMonth(new Date(year, idx, 1))}
+                className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
+                  month === idx
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
