@@ -141,13 +141,13 @@ export const DailyJournal: React.FC<DailyJournalProps> = ({ onNavigate }) => {
             <div>
               <span className="text-slate-400 text-[10px] uppercase block">Monthly Net P&L</span>
               <span className={`font-bold ${monthNetPL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {monthNetPL >= 0 ? '+' : ''}${monthNetPL.toLocaleString()}
+                {monthNetPL >= 0 ? '+' : ''}${Number(monthNetPL.toFixed(2)).toLocaleString()}
               </span>
             </div>
             <div>
               <span className="text-slate-400 text-[10px] uppercase block">Monthly Net R</span>
               <span className={`font-bold ${monthNetR >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {monthNetR >= 0 ? '+' : ''}{monthNetR}R
+                {monthNetR >= 0 ? '+' : ''}{Number(monthNetR.toFixed(2))}R
               </span>
             </div>
           </div>
@@ -223,19 +223,19 @@ export const DailyJournal: React.FC<DailyJournalProps> = ({ onNavigate }) => {
                 </div>
 
                 {didTrade ? (
-                  <div className={`p-2 rounded border text-xs font-mono space-y-0.5 ${
+                  <div className={`p-1.5 rounded border text-xs font-mono overflow-hidden ${
                     isProfit ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
                     isLoss ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-slate-100 text-slate-800 border-slate-200'
                   }`}>
-                    <div className="font-bold flex items-center justify-between">
-                      <span>{dayTrades.length} closed</span>
-                      <span>{isProfit ? '+' : ''}${dayPL}</span>
+                    <div className="font-bold flex items-center justify-between text-[11px] leading-tight">
+                      <span className="truncate">{dayTrades.length} closed</span>
+                      <span className="ml-1 whitespace-nowrap">{isProfit ? '+' : ''}${Number(dayPL.toFixed(2)).toLocaleString()}</span>
                     </div>
-                    <div className="text-[10px] opacity-80">{isProfit ? '+' : ''}{dayR}R</div>
+                    <div className="text-[10px] opacity-80 mt-0.5">{isProfit ? '+' : ''}{Number(dayR.toFixed(2))}R</div>
                   </div>
                 ) : hasDraft ? (
-                  <div className="p-2 rounded border border-amber-200 bg-amber-50 text-xs font-mono">
-                    <div className="font-bold text-amber-800">{draftTrades.length} open</div>
+                  <div className="p-1.5 rounded border border-amber-200 bg-amber-50 text-xs font-mono">
+                    <div className="font-bold text-amber-800 text-[11px]">{draftTrades.length} open</div>
                     <div className="text-[10px] text-amber-600">Needs closing</div>
                   </div>
                 ) : (
