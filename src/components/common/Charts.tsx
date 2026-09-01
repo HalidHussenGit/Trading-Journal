@@ -205,57 +205,96 @@ export const DailyPLBarChart: React.FC<DailyPLBarChartProps> = ({ data, height =
   );
 };
 
-// 3. R-MULTIPLE DISTRIBUTION HISTOGRAM
-interface RDistributionProps {
-  trades: { rMultiple: number }[];
+// 3. OUTCOMES DONUT CHART
+interface OutcomesPieChartProps {
+  wins: number;
+  partialWins: number;
+  losses: number;
+  breakevens: number;
 }
 
-export const RMultipleDistributionChart: React.FC<RDistributionProps> = ({ trades }) => {
-  if (!trades || trades.length === 0) {
+export const OutcomesPieChart: React.FC<OutcomesPieChartProps> = ({ wins, partialWins, losses, breakevens }) => {
+  const total = wins + partialWins + losses + breakevens;
+
+  if (total === 0) {
     return <div className="text-xs text-slate-400 text-center py-6">Not enough data yet</div>;
   }
 
-  const buckets = [
-    { label: '< -2R', count: 0, color: 'bg-rose-700' },
-    { label: '-2R to -1R', count: 0, color: 'bg-rose-600' },
-    { label: '-1R to 0R', count: 0, color: 'bg-rose-400' },
-    { label: '0R to +1R', count: 0, color: 'bg-emerald-400' },
-    { label: '+1R to +2R', count: 0, color: 'bg-emerald-600' },
-    { label: '> +2R', count: 0, color: 'bg-emerald-700' }
-  ];
+  const data = [
+    { label: 'Win', value: wins, color: '#059669' }, // emerald-600
+    { label: 'Partial Win', value: partialWins, color: '#0d9488' }, // teal-600
+    { label: 'Breakeven', value: breakevens, color: '#94a3b8' }, // slate-400
+    { label: 'Loss', value: losses, color: '#e11d48' }, // rose-600
+  ].filter(d => d.value > 0);
 
-  trades.forEach(t => {
-    const r = t.rMultiple || 0;
-    if (r < -2) buckets[0].count++;
-    else if (r >= -2 && r < -1) buckets[1].count++;
-    else if (r >= -1 && r < 0) buckets[2].count++;
-    else if (r >= 0 && r < 1) buckets[3].count++;
-    else if (r >= 1 && r <= 2) buckets[4].count++;
-    else if (r > 2) buckets[5].count++;
+  // SVG dimensions
+  const size = 200;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = 70; // For stroke-based donut
+  const strokeWidth = 30;
+  const circumference = 2 * Math.PI * radius;
+
+  let currentOffset = 0;
+  const segments = data.map((d, i) => {
+    const fraction = d.value / total;
+    const dashOffset = -currentOffset;
+    currentOffset += fraction * circumference;
+    
+    // Add small gap by subtracting from dashArray stroke length slightly, unless it's 100%
+    const gap = data.length > 1 ? 2 : 0;
+    const adjustedDashArray = `${Math.max(0, fraction * circumference - gap)} ${circumference}`;
+
+    return (
+      <circle
+        key={i}
+        cx={cx}
+        cy={cy}
+        r={radius}
+        fill="transparent"
+        stroke={d.color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={adjustedDashArray}
+        strokeDashoffset={dashOffset}
+        className="transition-all duration-500 hover:opacity-80 cursor-pointer"
+        strokeLinecap="round"
+        transform={`rotate(-90 ${cx} ${cy})`}
+      >
+        <title>{`${d.label}: ${d.value} trades (${Math.round(fraction * 100)}%)`}</title>
+      </circle>
+    );
   });
 
-  const maxCount = Math.max(...buckets.map(b => b.count), 1);
-
   return (
-    <div className="space-y-2">
-      <div className="text-xs font-semibold text-slate-700">R-Multiple Distribution</div>
-      <div className="space-y-1.5">
-        {buckets.map((b, idx) => {
-          const pct = Math.round((b.count / maxCount) * 100);
-          return (
-            <div key={idx} className="flex items-center gap-2 text-xs">
-              <span className="w-20 text-[11px] font-mono text-slate-600 text-right">{b.label}</span>
-              <div className="flex-1 bg-slate-100 h-4 rounded overflow-hidden flex items-center">
-                <div
-                  className={`h-full ${b.color} transition-all duration-300`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <span className="w-8 text-[11px] font-mono text-slate-600">{b.count}</span>
+    <div className="flex flex-col items-center justify-center">
+      <div className="w-full flex justify-between items-center mb-2">
+         <div className="text-xs font-semibold text-slate-700">Trade Outcomes</div>
+      </div>
+      <div className="relative w-[200px] h-[200px]">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          {/* Background circle for empty state or to give base ring */}
+          <circle cx={cx} cy={cy} r={radius} fill="transparent" stroke="#f1f5f9" strokeWidth={strokeWidth} />
+          {segments}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-2xl font-bold font-mono text-slate-800">{total}</span>
+          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-1">Trades</span>
+        </div>
+      </div>
+      <div className="w-full grid grid-cols-2 gap-3 mt-4">
+        {data.map((d, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }}></div>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold text-slate-700 leading-none">{d.label}</span>
+              <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                {d.value} ({Math.round((d.value / total) * 100)}%)
+              </span>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
 };
+

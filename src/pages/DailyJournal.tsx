@@ -283,12 +283,11 @@ export const DailyJournal: React.FC<DailyJournalProps> = ({ onNavigate }) => {
                       >
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{t.symbol}</span>
-                          <span className="text-[10px] text-slate-400 group-hover:text-blue-500 font-mono underline">View Details →</span>
                         </div>
                         <div className="text-slate-500">{t.direction} · {t.session}</div>
                         {isClosed ? (
                           <span className={`font-mono font-bold ${ isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-500' }`}>
-                            {isWin ? '+' : ''}${t.result?.netPL} ({isWin ? '+' : ''}{t.result?.rMultiple}R)
+                            {isWin ? '+' : ''}${Number((t.result?.netPL || 0).toFixed(2)).toLocaleString()} ({isWin ? '+' : ''}{Number((t.result?.rMultiple || 0).toFixed(2))}R)
                           </span>
                         ) : (
                           <button
@@ -322,8 +321,15 @@ export const DailyJournal: React.FC<DailyJournalProps> = ({ onNavigate }) => {
               </label>
               {selectedDay.didTrade && (
                 <div className="text-slate-500 font-mono">
-                  {selectedDay.tradeCount} trades · P&L: ${selectedDay.dailyPL} ({selectedDay.dailyR}R)
-                </div>
+                    {selectedDay.tradeCount} trades · P&L:{' '}
+                    <span className={Number(selectedDay.dailyPL) >= 0 ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}>
+                      {Number(selectedDay.dailyPL) >= 0 ? '+' : ''}${Number(Number(selectedDay.dailyPL).toFixed(2)).toLocaleString()}
+                    </span>
+                    {' · '}
+                    <span className={Number(selectedDay.dailyR) >= 0 ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}>
+                      {Number(selectedDay.dailyR) >= 0 ? '+' : ''}{Number(Number(selectedDay.dailyR).toFixed(2))}R
+                    </span>
+                  </div>
               )}
             </div>
 

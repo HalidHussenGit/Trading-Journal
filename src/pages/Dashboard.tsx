@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useJournal } from '../context/JournalContext';
 import { calculatePortfolioMetrics, calculateAdherenceBuckets, calculateProfitConsistency } from '../utils/calculations';
-import { EquityCurveChart, DailyPLBarChart, RMultipleDistributionChart } from '../components/common/Charts';
+import { EquityCurveChart, DailyPLBarChart, OutcomesPieChart } from '../components/common/Charts';
 import { PageId } from '../components/layout/Sidebar';
 import { CloseTradeModal } from '../components/common/CloseTradeModal';
 import { Trade } from '../types';
@@ -228,9 +228,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           />
         </div>
 
-        {/* R Distribution & Streaks */}
+        {/* Outcomes & Streaks */}
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-6">
-          <RMultipleDistributionChart trades={closedTrades.map(t => ({ rMultiple: t.result?.rMultiple || 0 }))} />
+          <OutcomesPieChart
+            wins={closedTrades.filter(t => t.result?.status === 'Win').length}
+            partialWins={closedTrades.filter(t => t.result?.status === 'Partial Win').length}
+            losses={closedTrades.filter(t => t.result?.status === 'Loss').length}
+            breakevens={closedTrades.filter(t => t.result?.status === 'Breakeven').length}
+          />
           
           <div className="border-t border-slate-100 pt-4 space-y-2">
             <div className="text-xs font-semibold text-slate-700">Streak Statistics</div>
