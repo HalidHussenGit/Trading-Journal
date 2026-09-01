@@ -121,8 +121,12 @@ export const TradeDetail: React.FC<TradeDetailProps> = ({ tradeId, onNavigate })
               <div className="font-bold text-slate-800">${trade.planned?.riskAmount} ({trade.planned?.riskPercent}%)</div>
             </div>
             <div>
-              <div className="text-slate-400 text-[10px]">Position Size</div>
-              <div className="font-bold text-slate-800">{trade.planned?.positionSize} units</div>
+              <div className="text-slate-400 text-[10px]">Planned Profit ($)</div>
+              <div className="font-bold text-emerald-600">${Number(((trade.planned?.riskAmount || 0) * (trade.planned?.plannedRR || 0)).toFixed(2))}</div>
+            </div>
+            <div>
+              <div className="text-slate-400 text-[10px]">Lot Size</div>
+              <div className="font-bold text-slate-800">{trade.planned?.lotSize ?? '—'}</div>
             </div>
           </div>
         </div>
