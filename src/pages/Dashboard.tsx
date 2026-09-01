@@ -69,44 +69,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         const draftTrades = trades.filter(t => t.status !== 'Closed' && !t.isArchived);
         if (draftTrades.length === 0) return null;
         return (
-          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 space-y-2">
+          <div className="bg-white border border-slate-200 shadow-xs rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-amber-600 text-sm">⏳</span>
-                <span className="text-sm font-bold text-amber-900">
-                  {draftTrades.length} trade{draftTrades.length > 1 ? 's' : ''} need closing
-                </span>
-              </div>
-              <button
-                onClick={() => onNavigate('trades')}
-                className="text-xs text-amber-700 underline font-medium hover:text-amber-900"
-              >
-                View all →
-              </button>
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                {draftTrades.length} trade{draftTrades.length > 1 ? 's' : ''} need closing
+              </span>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {draftTrades.slice(0, 4).map(t => (
                 <div
                   key={t.id}
                   onClick={() => onNavigate('trade-detail', t.id)}
-                  className="flex items-center justify-between bg-white rounded border border-amber-200 px-3 py-1.5 text-xs cursor-pointer hover:bg-amber-100/50 transition-colors group"
+                  className="flex items-center justify-between bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 px-3.5 py-2 text-xs cursor-pointer transition-colors group"
                   title="Click to view trade details"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-slate-900 group-hover:text-amber-900">{t.symbol}</span>
-                    <span className="text-[10px] text-amber-600 font-mono underline">View Details →</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{t.symbol}</span>
+                    <span className="text-slate-500 font-sans">{t.date} · {t.direction} · Entry {t.planned?.entry}</span>
                   </div>
-                  <span className="text-slate-500">{t.date} · {t.direction} · Entry {t.planned?.entry}</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); setClosingTrade(t); }}
-                    className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800"
+                    className="px-3 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800 transition-colors"
                   >
                     Close
                   </button>
                 </div>
               ))}
               {draftTrades.length > 4 && (
-                <div className="text-xs text-amber-600 text-center">+{draftTrades.length - 4} more…</div>
+                <div className="text-xs text-slate-400 text-center font-mono">+{draftTrades.length - 4} more open trades…</div>
               )}
             </div>
           </div>
