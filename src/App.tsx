@@ -17,6 +17,7 @@ import { BackupRestore } from './pages/BackupRestore';
 import { useJournal } from './context/JournalContext';
 
 import { LoadingScreen } from './components/common/LoadingScreen';
+import { MobileTabBar } from './components/layout/MobileTabBar';
 
 export const AppContent: React.FC = () => {
   const { trades, isLoading } = useJournal();
@@ -50,7 +51,7 @@ export const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 font-sans text-slate-900 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 font-sans text-slate-900 overflow-hidden pb-[68px] md:pb-0">
       <Sidebar activePage={activePage} onNavigate={handleNavigate} />
       
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -69,6 +70,7 @@ export const AppContent: React.FC = () => {
           {activePage === 'backup' && <BackupRestore />}
         </main>
       </div>
+      <MobileTabBar activePage={activePage} onNavigate={handleNavigate} />
     </div>
   );
 };

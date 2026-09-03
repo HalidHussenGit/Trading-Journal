@@ -319,52 +319,55 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   <div
                     key={t.id}
                     onClick={() => onNavigate('trade-detail', t.id)}
-                    className="grid grid-cols-[80px_1fr_100px_140px] items-center gap-4 bg-slate-50 hover:bg-slate-100/80 px-4 py-2.5 rounded border border-slate-200 text-xs cursor-pointer transition-colors group"
+                    className="flex flex-col gap-2 bg-slate-50 hover:bg-slate-100/80 px-4 py-3 rounded border border-slate-200 text-xs cursor-pointer transition-colors group"
                     title="Click to view trade details"
                   >
-                    <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
-                      {t.symbol}
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                        {t.symbol}
+                      </div>
+                      <div className="flex justify-end">
+                        {isClosed ? (
+                          <span className={`font-bold tabular-nums ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-500'}`}>
+                            {isWin ? '+' : ''}${t.result?.netPL}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setClosingTrade(t); }}
+                            className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800 transition-colors"
+                          >
+                            Close Trade
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${t.direction === 'Long' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                        {t.direction}
-                      </span>
-                      <span className="text-[11px] text-slate-500 truncate hidden sm:block">
-                        {t.date} {t.time}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-start">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide text-center min-w-[70px] ${
-                        t.status === 'Closed' ? (
-                          isWin ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                          isLoss ? 'bg-rose-100 text-rose-800 border border-rose-200' :
-                          'bg-slate-100 text-slate-600 border border-slate-200'
-                        ) :
-                        t.status === 'Draft' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                        'bg-blue-50 text-blue-700 border border-blue-200'
-                      }`}>
-                        {t.status === 'Closed' ? (t.result?.status || 'Closed') : t.status}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-end">
-                      {isClosed ? (
-                        <span className={`font-bold tabular-nums ${isWin ? 'text-emerald-600' : isLoss ? 'text-rose-600' : 'text-slate-500'}`}>
-                          {isWin ? '+' : ''}${t.result?.netPL}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${t.direction === 'Long' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                          {t.direction}
                         </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setClosingTrade(t); }}
-                          className="px-2.5 py-1 bg-emerald-700 text-white rounded text-[10px] font-bold hover:bg-emerald-800 transition-colors"
-                        >
-                          Close Trade
-                        </button>
-                      )}
+                        <span className="text-[11px] text-slate-500 truncate">
+                          {t.date} {t.time}
+                        </span>
+                      </div>
+                      <div className="flex justify-start">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide text-center ${
+                          t.status === 'Closed' ? (
+                            isWin ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                            isLoss ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                            'bg-slate-100 text-slate-600 border border-slate-200'
+                          ) :
+                          t.status === 'Draft' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-blue-50 text-blue-700 border border-blue-200'
+                        }`}>
+                          {t.status === 'Closed' ? (t.result?.status || 'Closed') : t.status}
+                        </span>
+                      </div>
                     </div>
                   </div>
+
                 );
               })}
           </div>

@@ -33,7 +33,7 @@ export const TradeDetail: React.FC<TradeDetailProps> = ({ tradeId, onNavigate })
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Top Navigation & Status Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <button
           onClick={() => onNavigate('trades')}
           className="flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900"
@@ -41,7 +41,7 @@ export const TradeDetail: React.FC<TradeDetailProps> = ({ tradeId, onNavigate })
           ← Back to Trades Log
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => onNavigate('new-trade', trade.id)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded text-xs font-medium hover:bg-slate-800 transition-colors shadow-xs"
@@ -60,7 +60,7 @@ export const TradeDetail: React.FC<TradeDetailProps> = ({ tradeId, onNavigate })
             </svg>
             Delete Trade
           </button>
-          <span className="text-xs text-slate-400 font-mono ml-2">ID: {trade.id}</span>
+          <span className="text-xs text-slate-400 font-mono w-full md:w-auto mt-2 md:mt-0">ID: {trade.id}</span>
         </div>
       </div>
 

@@ -544,6 +544,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               <input
                 type="number"
                 step="any"
+                inputMode="decimal"
                 required
                 value={entryPrice}
                 onChange={e => setEntryPrice(parseFloat(e.target.value) || 0)}
@@ -556,6 +557,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               <input
                 type="number"
                 step="any"
+                inputMode="decimal"
                 required
                 value={stopLossPrice}
                 onChange={e => setStopLossPrice(parseFloat(e.target.value) || 0)}
@@ -568,6 +570,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               <input
                 type="number"
                 step="any"
+                inputMode="decimal"
                 required
                 value={takeProfitPrice}
                 onChange={e => setTakeProfitPrice(parseFloat(e.target.value) || 0)}
@@ -580,6 +583,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               <input
                 type="number"
                 step="any"
+                inputMode="decimal"
                 value={lotSizeStr}
                 onChange={e => setLotSizeStr(e.target.value)}
                 placeholder="e.g. 1.0"
@@ -663,6 +667,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                   <input
                     type="number"
                     step="any"
+                    inputMode="decimal"
                     value={ex.exitPrice}
                     onChange={e => {
                       const updated = [...exits];

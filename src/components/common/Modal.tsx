@@ -39,13 +39,13 @@ export const Modal: React.FC<ModalProps> = ({
   }[maxWidth];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/40 backdrop-blur-xs p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-0 sm:p-4">
       <div 
-        className={`relative w-full ${maxWidthClass} bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+        className={`relative w-full h-full sm:h-auto ${maxWidthClass} bg-white sm:rounded-lg border-0 sm:border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div>
             <h3 className="text-base font-semibold text-slate-900">{title}</h3>
             {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-4 max-h-[80vh] overflow-y-auto">
+        <div className="px-6 py-4 flex-1 overflow-y-auto sm:max-h-[80vh]">
           {children}
         </div>
       </div>

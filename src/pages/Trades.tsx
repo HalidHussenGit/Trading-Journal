@@ -133,8 +133,9 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white md:bg-transparent rounded-lg border-0 md:border md:border-slate-200 md:shadow-xs overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto bg-white">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[10px] tracking-wider select-none">
                 <tr>
@@ -255,6 +256,89 @@ export const Trades: React.FC<TradesProps> = ({ onNavigate }) => {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {sorted.map(t => {
+              const acc = accounts.find(a => a.id === t.accountId);
+              const stp = setups.find(s => s.id === t.setupId);
+              const outcome = t.result?.status;
+              const plPositive = (t.result?.netPL || 0) > 0;
+              const plNegative = (t.result?.netPL || 0) < 0;
+
+              return (
+                <div key={t.id} onClick={() => onNavigate('trade-detail', t.id)} className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 font-mono text-base">{t.symbol}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${t.direction === 'Long' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                          {t.direction}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-mono">{t.date} {t.time}</div>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className={`font-bold font-mono text-base ${plPositive ? 'text-emerald-600' : plNegative ? 'text-rose-600' : 'text-slate-600'}`}>
+                        {t.status === 'Closed' ? `${plPositive ? '+' : ''}$${t.result?.netPL}` : t.status}
+                      </span>
+                      {t.status === 'Closed' && (
+                        <span className={`text-[11px] font-bold font-mono ${plPositive ? 'text-emerald-600' : plNegative ? 'text-rose-600' : 'text-slate-400'}`}>
+                          {plPositive ? '+' : ''}{t.result?.rMultiple}R
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2.5 rounded border border-slate-100">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 uppercase text-[9px] font-bold tracking-wider">Status</span>
+                      <span className="font-semibold text-slate-700">{outcome || t.status}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 uppercase text-[9px] font-bold tracking-wider">Account</span>
+                      <span className="font-semibold text-slate-700 truncate">{acc?.name || 'Main'}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 uppercase text-[9px] font-bold tracking-wider">Setup</span>
+                      <span className="font-semibold text-slate-700 truncate">{stp?.name || 'General'}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 uppercase text-[9px] font-bold tracking-wider">Adherence</span>
+                      <span className="font-semibold text-slate-700">{t.checklistSnapshot?.adherencePercent ?? 100}%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end items-center gap-2 mt-1">
+                    {t.status !== 'Closed' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setClosingTrade(t); }}
+                        className="px-3 py-1.5 bg-emerald-700 text-white rounded text-[11px] font-bold hover:bg-emerald-800 transition-colors"
+                      >
+                        Close Trade
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onNavigate('new-trade', t.id); }}
+                      className="p-1.5 text-slate-500 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 rounded transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeletingTrade(t); }}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 rounded transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

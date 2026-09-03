@@ -176,8 +176,10 @@ export const DailyJournal: React.FC<DailyJournalProps> = ({ onNavigate }) => {
 
       {/* Calendar Grid View */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-        {/* Weekday Headers */}
-        <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-semibold text-slate-600 py-2.5">
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px] md:min-w-full">
+            {/* Weekday Headers */}
+            <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-semibold text-slate-600 py-2.5">
           <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
         </div>
 
@@ -248,6 +250,8 @@ export const DailyJournal: React.FC<DailyJournalProps> = ({ onNavigate }) => {
               </div>
             );
           })}
+            </div>
+          </div>
         </div>
       </div>
 

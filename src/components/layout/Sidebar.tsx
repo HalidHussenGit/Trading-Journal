@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 min-h-screen border-r border-slate-800 select-none">
+    <aside className="hidden md:flex w-64 bg-slate-900 text-slate-300 flex-col shrink-0 min-h-screen border-r border-slate-800 select-none">
       {/* Brand Header */}
       <div className="h-16 px-6 flex items-center justify-between border-b border-slate-800/80">
         <div className="flex items-center gap-3">

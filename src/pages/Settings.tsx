@@ -40,7 +40,7 @@ export const SettingsPage: React.FC = () => {
           {/* General Preferences */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-slate-900 uppercase">General Preferences</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Base Currency Symbol</label>
                 <input
@@ -69,7 +69,7 @@ export const SettingsPage: React.FC = () => {
           {/* Risk Thresholds */}
           <div className="space-y-4 border-t border-slate-100 pt-4">
             <h3 className="text-xs font-bold text-slate-900 uppercase">Risk Threshold Banners</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Normal Risk Max %</label>
                 <input

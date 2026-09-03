@@ -13,16 +13,16 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
   const { currentUser, logout, accounts, trades, filters, setFilters, autosaveStatus, notification } = useJournal();
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-40 shadow-xs">
+    <header className="h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 shadow-xs">
       {/* Title & Page Context */}
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-bold text-slate-900 tracking-tight">{title}</h1>
       </div>
 
       {/* Global Controls & Account Switcher */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Account Selector Filter */}
-        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded px-2.5 py-1">
+        <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded px-2.5 py-1">
           <span className="text-xs text-slate-500 font-medium">Account:</span>
           <select
             value={filters.accountId}
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
         </div>
 
         {/* Global Search Bar */}
-        <div className="relative">
+        <div className="relative hidden md:block">
           <input
             type="text"
             placeholder="Search notes, symbol, tags..."
@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
 
         {/* User Session & Logout */}
         {currentUser && (
-          <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+          <div className="hidden md:flex items-center gap-2 border-l border-slate-200 pl-3">
             <span className="text-xs font-mono font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
               @{currentUser.username}
             </span>
@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, title }) => {
         {/* Quick New Trade Action */}
         <button
           onClick={() => onNavigate('new-trade')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-medium transition-colors shadow-xs"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-medium transition-colors shadow-xs"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
