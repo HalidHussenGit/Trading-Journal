@@ -3,7 +3,7 @@ import { useJournal } from '../context/JournalContext';
 import { Settings as SettingsType } from '../types';
 
 export const SettingsPage: React.FC = () => {
-  const { settings, saveSettings, storageStatus } = useJournal();
+  const { settings, saveSettings, storageStatus, logout } = useJournal();
   const [formSettings, setFormSettings] = useState<SettingsType>({ ...settings });
 
   const handleSave = async (e: React.FormEvent) => {
@@ -115,6 +115,24 @@ export const SettingsPage: React.FC = () => {
             </button>
           </div>
         </form>
+
+        {/* Account & Session */}
+        <div className="space-y-4 pt-6 border-t border-slate-200">
+          <h3 className="text-xs font-bold text-slate-900 uppercase">Account & Session</h3>
+          <div className="flex items-center justify-between p-4 border border-slate-100 bg-slate-50/50 rounded-lg">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Sign Out</p>
+              <p className="text-xs text-slate-500 mt-0.5">End your current session on this device.</p>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="px-4 py-2 bg-rose-600 text-white text-xs font-medium rounded hover:bg-rose-700 transition-colors shadow-xs"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
