@@ -189,7 +189,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
         {/* Profit Consistency — 5th tile, only when a rule is configured */}
         {consistencyTarget > 0 && (
-          <div className={`bg-white p-4 rounded-lg border shadow-xs ${
+          <div className={`col-span-2 md:col-span-1 bg-white p-4 rounded-lg border shadow-xs ${
             consistency.status === 'Pass' ? 'border-emerald-200' :
             consistency.status === 'Fail' ? 'border-rose-200' : 'border-slate-200'
           }`}>
