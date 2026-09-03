@@ -169,9 +169,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="text-lg font-bold font-mono text-slate-900 mt-1">
             {metrics.hasEnoughData ? `${metrics.winRate}%` : 'N/A'}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            W: <span className="text-emerald-600 font-semibold">{closedTrades.filter(t => t.result?.status === 'Win').length}</span> · PW: <span className="text-teal-600 font-semibold">{closedTrades.filter(t => t.result?.status === 'Partial Win').length}</span> · L: <span className="text-rose-600 font-semibold">{metrics.losingTradesCount}</span> · BE: {metrics.breakevenTradesCount}
-          </div>
         </div>
 
         {/* Risk to Reward Ratio */}
@@ -214,7 +211,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             )}
           </div>
         )}
-
       </div>
 
       {/* Main Charts Section */}
@@ -234,19 +230,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             wins={closedTrades.filter(t => t.result?.status === 'Win').length}
             partialWins={closedTrades.filter(t => t.result?.status === 'Partial Win').length}
             losses={closedTrades.filter(t => t.result?.status === 'Loss').length}
+            partialLosses={closedTrades.filter(t => t.result?.status === 'Partial Loss').length}
             breakevens={closedTrades.filter(t => t.result?.status === 'Breakeven').length}
           />
           
-          <div className="border-t border-slate-100 pt-4 space-y-2">
-            <div className="text-xs font-semibold text-slate-700">Streak Statistics</div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                <div className="text-slate-500 text-[10px]">Max Win Streak</div>
-                <div className="font-bold text-emerald-600 font-mono text-sm">{metrics.maxConsecutiveWins} trades</div>
+          <div className="border-t border-slate-100 pt-5 space-y-3">
+            <div className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span>Streak Statistics</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-lg p-3 transition-all hover:shadow-sm">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Max Wins</span>
+                <div className="flex items-end gap-1.5">
+                  <span className="text-2xl font-bold font-mono text-emerald-600 leading-none">{metrics.maxConsecutiveWins}</span>
+                  <span className="text-[10px] text-slate-400 font-medium mb-0.5">trades</span>
+                </div>
               </div>
-              <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                <div className="text-slate-500 text-[10px]">Max Loss Streak</div>
-                <div className="font-bold text-rose-600 font-mono text-sm">{metrics.maxConsecutiveLosses} trades</div>
+
+              <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-lg p-3 transition-all hover:shadow-sm">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Max Losses</span>
+                <div className="flex items-end gap-1.5">
+                  <span className="text-2xl font-bold font-mono text-rose-600 leading-none">{metrics.maxConsecutiveLosses}</span>
+                  <span className="text-[10px] text-slate-400 font-medium mb-0.5">trades</span>
+                </div>
               </div>
             </div>
           </div>

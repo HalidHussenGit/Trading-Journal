@@ -16,8 +16,10 @@ import { BackupRestore } from './pages/BackupRestore';
 
 import { useJournal } from './context/JournalContext';
 
+import { LoadingScreen } from './components/common/LoadingScreen';
+
 export const AppContent: React.FC = () => {
-  const { trades } = useJournal();
+  const { trades, isLoading } = useJournal();
   const [activePage, setActivePage] = useState<PageId>('dashboard');
   const [activeTradeId, setActiveTradeId] = useState<string | null>(null);
 
@@ -42,6 +44,10 @@ export const AppContent: React.FC = () => {
     settings: 'Settings',
     backup: 'Backup & Restore'
   };
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="flex h-screen bg-slate-100 font-sans text-slate-900 overflow-hidden">

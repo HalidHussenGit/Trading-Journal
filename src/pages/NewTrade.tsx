@@ -27,7 +27,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const [session, setSession] = useState<any>(existingTrade?.session || 'London');
   const [timeframe, setTimeframe] = useState<string>(existingTrade?.timeframe || '15m');
   const [marketCondition, setMarketCondition] = useState<string>(existingTrade?.marketCondition || 'Trending');
-  const [tagInput, setTagInput] = useState<string>('');
   const [tags, setTags] = useState<string[]>(existingTrade?.tags || []);
 
   // Planned & Risk Sizing State
@@ -135,14 +134,6 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const totalChecklistCount = checklistItems.length;
   const adherencePercent = totalChecklistCount > 0 ? Math.round((completedChecklistCount / totalChecklistCount) * 100) : 100;
   const missingRequired = checklistItems.filter(i => i.required && !i.checked);
-
-  // Add Tag handler
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
-    }
-  };
 
   // Single Screenshot Upload handler
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

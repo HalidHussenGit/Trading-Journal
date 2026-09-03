@@ -210,11 +210,12 @@ interface OutcomesPieChartProps {
   wins: number;
   partialWins: number;
   losses: number;
+  partialLosses: number;
   breakevens: number;
 }
 
-export const OutcomesPieChart: React.FC<OutcomesPieChartProps> = ({ wins, partialWins, losses, breakevens }) => {
-  const total = wins + partialWins + losses + breakevens;
+export const OutcomesPieChart: React.FC<OutcomesPieChartProps> = ({ wins, partialWins, losses, partialLosses, breakevens }) => {
+  const total = wins + partialWins + losses + partialLosses + breakevens;
 
   if (total === 0) {
     return <div className="text-xs text-slate-400 text-center py-6">Not enough data yet</div>;
@@ -224,6 +225,7 @@ export const OutcomesPieChart: React.FC<OutcomesPieChartProps> = ({ wins, partia
     { label: 'Win', value: wins, color: '#059669' }, // emerald-600
     { label: 'Partial Win', value: partialWins, color: '#0d9488' }, // teal-600
     { label: 'Breakeven', value: breakevens, color: '#94a3b8' }, // slate-400
+    { label: 'Partial Loss', value: partialLosses, color: '#fb7185' }, // rose-400
     { label: 'Loss', value: losses, color: '#e11d48' }, // rose-600
   ].filter(d => d.value > 0);
 

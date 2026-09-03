@@ -164,7 +164,13 @@ export interface PortfolioMetrics {
 }
 
 export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance: number = 10000): PortfolioMetrics {
-  const closedTrades = trades.filter(t => t.status === 'Closed' && !t.isArchived);
+  const closedTrades = trades
+    .filter(t => t.status === 'Closed' && !t.isArchived)
+    .sort((a, b) => {
+      const dateTimeA = a.date + 'T' + (a.time || '00:00');
+      const dateTimeB = b.date + 'T' + (b.time || '00:00');
+      return dateTimeA.localeCompare(dateTimeB);
+    });
 
   if (closedTrades.length === 0) {
     return {
@@ -284,6 +290,8 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
       lastOutcome = 'loss';
     } else {
       breakevenCount++;
+      currentWins = 0;
+      currentLosses = 0;
       lastOutcome = 'breakeven';
     }
 
