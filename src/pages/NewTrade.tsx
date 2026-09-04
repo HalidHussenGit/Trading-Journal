@@ -149,7 +149,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   });
 
   // Compute Multi-Exit weighted metrics live
-  const exitCalc = calculateMultiExitResults(exits, riskCalc.riskAmount);
+  const exitCalc = calculateMultiExitResults(exits, riskCalc.riskAmount, entryPrice, stopLossPrice, direction);
 
   // Calculate checklist adherence %
   const completedChecklistCount = checklistItems.filter(i => i.checked).length;

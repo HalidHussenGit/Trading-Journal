@@ -97,7 +97,10 @@ export interface MultiExitCalculationResult {
 
 export function calculateMultiExitResults(
   exits: TradeExit[],
-  plannedRiskAmount: number
+  plannedRiskAmount: number,
+  entry?: number,
+  stopLoss?: number,
+  direction?: 'Long' | 'Short'
 ): MultiExitCalculationResult {
   if (!exits || exits.length === 0) {
     return {
@@ -121,7 +124,21 @@ export function calculateMultiExitResults(
   });
 
   const weightedExitPrice = totalWeight > 0 ? weightedPriceSum / totalWeight : 0;
-  const totalRealizedR = plannedRiskAmount > 0 ? totalPL / plannedRiskAmount : 0;
+  
+  let totalRealizedR = 0;
+  if (entry && stopLoss && direction && totalWeight > 0) {
+    const initialRisk = direction === 'Long' ? entry - stopLoss : stopLoss - entry;
+    if (initialRisk > 0) {
+      const priceDiff = direction === 'Long' ? weightedExitPrice - entry : entry - weightedExitPrice;
+      // We weight the totalRealizedR by how much size was actually taken out
+      totalRealizedR = (priceDiff / initialRisk) * (totalWeight / 100);
+    } else if (plannedRiskAmount > 0) {
+      totalRealizedR = totalPL / plannedRiskAmount;
+    }
+  } else if (plannedRiskAmount > 0) {
+    totalRealizedR = totalPL / plannedRiskAmount;
+  }
+
   const remainingSizePercent = Math.max(0, 100 - totalWeight);
 
   return {

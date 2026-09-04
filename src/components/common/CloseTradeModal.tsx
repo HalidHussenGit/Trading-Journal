@@ -61,13 +61,12 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
       const netPL = grossPL - fees - commission - swap;
 
       let rMultiple = 0;
-      if (riskAmount > 0) {
+      const initialRisk = trade.direction === 'Long' ? (entry - sl) : (sl - entry);
+      
+      if (initialRisk > 0) {
+        rMultiple = priceDiff / initialRisk;
+      } else if (riskAmount > 0) {
         rMultiple = netPL / riskAmount;
-      } else {
-        const initialRisk = trade.direction === 'Long' ? (entry - sl) : (sl - entry);
-        if (initialRisk > 0) {
-          rMultiple = priceDiff / initialRisk;
-        }
       }
 
       // Save pointValue back to planned so it persists
