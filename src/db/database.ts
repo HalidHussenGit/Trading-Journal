@@ -230,11 +230,11 @@ class SupabaseDatabaseService {
       const itemRows = setup.checklist.map((item, idx) => {
         const row: Record<string, any> = {
           setup_id: realSetupId,
-          name: item.name,
-          description: item.description,
-          required: item.required,
+          name: item.name || '',
+          description: item.description || '',
+          required: item.required || false,
           order_index: item.order || idx + 1,
-          active: item.active
+          active: item.active !== false
         };
         if (isValidUUID(item.id)) row.id = item.id;
         return row;

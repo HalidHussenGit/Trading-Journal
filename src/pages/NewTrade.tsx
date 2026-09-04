@@ -5,6 +5,17 @@ import { calculateRiskAndPositionSize, calculateMultiExitResults } from '../util
 import { validateTrade } from '../utils/validation';
 import { PageId } from '../components/layout/Sidebar';
 
+// Auto-detect the trading session from a HH:mm time string (assumes UTC/broker time)
+function getSessionFromTime(timeStr: string): string {
+  if (!timeStr) return 'Off-Hours';
+  const [h] = timeStr.split(':').map(Number);
+  if (h >= 7 && h <= 11) return 'London';
+  if (h >= 12 && h <= 16) return 'New York (AM)';
+  if (h >= 17 && h <= 19) return 'New York (PM)';
+  if (h >= 0 && h <= 6) return 'Asian';
+  return 'Off-Hours';
+}
+
 interface NewTradeProps {
   onNavigate: (page: PageId, tradeId?: string) => void;
   existingTrade?: Trade | null;
@@ -24,7 +35,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
   const [status, setStatus] = useState<any>(existingTrade?.status || 'Draft');
   const [date, setDate] = useState<string>(existingTrade?.date || new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState<string>(existingTrade?.time || new Date().toTimeString().slice(0, 5));
-  const [session, setSession] = useState<any>(existingTrade?.session || 'London');
+  const [session, setSession] = useState<any>(existingTrade?.session || getSessionFromTime(new Date().toTimeString().slice(0, 5)));
   const [timeframe, setTimeframe] = useState<string>(existingTrade?.timeframe || '15m');
   const [marketCondition, setMarketCondition] = useState<string>(existingTrade?.marketCondition || 'Trending');
   const [tags, setTags] = useState<string[]>(existingTrade?.tags || []);
@@ -65,7 +76,7 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
       setStatus(existingTrade.status);
       setDate(existingTrade.date);
       setTime(existingTrade.time || new Date().toTimeString().slice(0, 5));
-      setSession(existingTrade.session || 'London');
+      setSession(existingTrade.session || getSessionFromTime(existingTrade.time || new Date().toTimeString().slice(0, 5)));
       setTimeframe(existingTrade.timeframe || '15m');
       setMarketCondition(existingTrade.marketCondition || 'Trending');
       setTags(existingTrade.tags || []);
@@ -390,7 +401,12 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
               <input
                 type="time"
                 value={time}
-                onChange={e => setTime(e.target.value)}
+                onChange={e => {
+                  const newTime = e.target.value;
+                  setTime(newTime);
+                  // Auto-detect session from time unless user has manually set it
+                  setSession(getSessionFromTime(newTime));
+                }}
                 className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
               />
             </div>

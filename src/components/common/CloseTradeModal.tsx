@@ -15,6 +15,7 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
 
   const [outcome, setOutcome] = useState<TradeOutcome>('Win');
   const [actualExit, setActualExit] = useState<number>(trade.planned?.takeProfit || trade.planned?.entry || 0);
+  const [pointValue, setPointValue] = useState<number>(trade.planned?.pointValue || 1);
   const [whatWentWell, setWhatWentWell] = useState<string>(trade.journal?.whatWentWell || '');
   const [whatWentWrong, setWhatWentWrong] = useState<string>(trade.journal?.whatWentWrong || '');
   const [lessonsLearned] = useState<string>(trade.journal?.lessonsLearned || '');
@@ -37,8 +38,6 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
     try {
       const entry = trade.planned?.entry || 0;
       const sl = trade.planned?.stopLoss || 0;
-      const size = trade.planned?.positionSize || (trade.actual?.positionSize || 1);
-      const pointValue = trade.planned?.pointValue || 1;
       const contractSize = trade.planned?.contractSize || 1;
       const riskAmount = trade.planned?.riskAmount || 0;
 
@@ -49,7 +48,12 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
         priceDiff = entry - actualExit;
       }
 
-      const grossPL = priceDiff * size * pointValue * contractSize;
+      // Prefer user-entered lot size over auto-calculated position size
+      // This is critical for instruments like XAUUSD where point value differs
+      const lotSize = trade.planned?.lotSize;
+      const effectiveSize = lotSize !== undefined && lotSize > 0 ? lotSize : (trade.planned?.positionSize || trade.actual?.positionSize || 1);
+      
+      const grossPL = priceDiff * effectiveSize * pointValue * contractSize;
       
       const fees = trade.actual?.fees || 0;
       const commission = trade.actual?.commission || 0;
@@ -66,14 +70,18 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
         }
       }
 
+      // Save pointValue back to planned so it persists
+      const updatedPlanned = { ...trade.planned, pointValue };
+
       const closedTrade: Trade = {
         ...trade,
+        planned: updatedPlanned,
         status: 'Closed',
         actual: {
           ...trade.actual,
           entry: trade.actual?.entry || entry,
           exit: actualExit,
-          positionSize: size,
+          positionSize: trade.actual?.positionSize || 0,
           fees,
           commission,
           swap,
@@ -125,13 +133,22 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
   };
 
   const riskAmount = trade.planned?.riskAmount;
+  
+  // Live P&L preview
+  const lotSize = trade.planned?.lotSize;
+  const effectiveSizePreview = lotSize !== undefined && lotSize > 0 ? lotSize : (trade.planned?.positionSize || trade.actual?.positionSize || 1);
+  const entry = trade.planned?.entry || 0;
+  const contractSizePreview = trade.planned?.contractSize || 1;
+  const priceDiffPreview = trade.direction === 'Long' ? actualExit - entry : entry - actualExit;
+  const grossPLPreview = priceDiffPreview * effectiveSizePreview * pointValue * contractSizePreview;
+  const netPLPreview = grossPLPreview - (trade.actual?.fees || 0) - (trade.actual?.commission || 0) - (trade.actual?.swap || 0);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Close Trade — ${trade.symbol} (${trade.direction})`}>
       <form onSubmit={handleSave} className="space-y-5">
 
         {/* Trade Summary */}
-        <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded border border-slate-200 text-xs font-mono">
+        <div className="grid grid-cols-4 gap-3 bg-slate-50 p-3 rounded border border-slate-200 text-xs font-mono">
           <div>
             <div className="text-slate-400 text-[10px] uppercase">Entry</div>
             <div className="font-bold text-slate-900">{trade.planned?.entry || '—'}</div>
@@ -139,6 +156,10 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
           <div>
             <div className="text-slate-400 text-[10px] uppercase">SL</div>
             <div className="font-bold text-rose-700">{trade.planned?.stopLoss || '—'}</div>
+          </div>
+          <div>
+            <div className="text-slate-400 text-[10px] uppercase">Lot Size</div>
+            <div className="font-bold text-slate-900">{lotSize ?? (trade.planned?.positionSize?.toFixed(2) ?? '—')}</div>
           </div>
           <div>
             <div className="text-slate-400 text-[10px] uppercase">Risk $</div>
@@ -172,7 +193,7 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
         </div>
 
         {/* Actual Numbers */}
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Actual Exit Price</label>
             <input
@@ -183,6 +204,31 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
               onChange={e => setActualExit(parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Point Value
+              <span className="ml-1 text-slate-400 font-normal">(e.g. 100 for Gold)</span>
+            </label>
+            <input
+              type="number"
+              step="any"
+              min="0.001"
+              value={pointValue}
+              onChange={e => setPointValue(parseFloat(e.target.value) || 1)}
+              className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs font-mono focus:ring-1 focus:ring-slate-900 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Live P&L Preview */}
+        <div className={`flex items-center justify-between p-3 rounded border text-xs font-mono ${
+          netPLPreview > 0 ? 'bg-emerald-50 border-emerald-200' :
+          netPLPreview < 0 ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'
+        }`}>
+          <div className="text-slate-500 text-[10px] uppercase tracking-wider">Calculated Net P&L</div>
+          <div className={`text-base font-bold ${netPLPreview > 0 ? 'text-emerald-700' : netPLPreview < 0 ? 'text-rose-700' : 'text-slate-600'}`}>
+            {netPLPreview >= 0 ? '+' : ''}${Number(netPLPreview.toFixed(2))}
           </div>
         </div>
 
