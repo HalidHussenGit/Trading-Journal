@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Trade, TradeOutcome } from '../../types';
 import { useJournal } from '../../context/JournalContext';
 import { Modal } from './Modal';
+import { computePriceBasedRR } from '../../utils/calculations';
 
 interface CloseTradeModalProps {
   trade: Trade;
@@ -60,12 +61,14 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
       const swap = trade.actual?.swap || 0;
       const netPL = grossPL - fees - commission - swap;
 
-      let rMultiple = 0;
-      const initialRisk = trade.direction === 'Long' ? (entry - sl) : (sl - entry);
-      
-      if (initialRisk > 0) {
-        rMultiple = priceDiff / initialRisk;
-      } else if (riskAmount > 0) {
+      // ── R-Multiple: always price-distance / initial-risk ──────────────────
+      // Formula: RR = abs(exit − entry) / abs(entry − SL)
+      // LONG:  risk = entry − SL,  reward = exit − entry
+      // SHORT: risk = SL − entry,  reward = entry − exit
+      let rMultiple = computePriceBasedRR(entry, sl, actualExit, trade.direction);
+
+      // Only fall back to dollar-based if price levels are genuinely missing
+      if (rMultiple === 0 && riskAmount > 0 && netPL !== 0) {
         rMultiple = netPL / riskAmount;
       }
 
@@ -132,15 +135,19 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
   };
 
   const riskAmount = trade.planned?.riskAmount;
-  
+
   // Live P&L preview
   const lotSize = trade.planned?.lotSize;
   const effectiveSizePreview = lotSize !== undefined && lotSize > 0 ? lotSize : (trade.planned?.positionSize || trade.actual?.positionSize || 1);
   const entry = trade.planned?.entry || 0;
+  const sl = trade.planned?.stopLoss || 0;
   const contractSizePreview = trade.planned?.contractSize || 1;
   const priceDiffPreview = trade.direction === 'Long' ? actualExit - entry : entry - actualExit;
   const grossPLPreview = priceDiffPreview * effectiveSizePreview * pointValue * contractSizePreview;
   const netPLPreview = grossPLPreview - (trade.actual?.fees || 0) - (trade.actual?.commission || 0) - (trade.actual?.swap || 0);
+
+  // Live RR preview — always price-distance based
+  const rrPreview = computePriceBasedRR(entry, sl, actualExit, trade.direction);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Close Trade — ${trade.symbol} (${trade.direction})`}>
@@ -220,14 +227,22 @@ export const CloseTradeModal: React.FC<CloseTradeModalProps> = ({ trade, isOpen,
           </div>
         </div>
 
-        {/* Live P&L Preview */}
+        {/* Live P&L + RR Preview */}
         <div className={`flex items-center justify-between p-3 rounded border text-xs font-mono ${
           netPLPreview > 0 ? 'bg-emerald-50 border-emerald-200' :
           netPLPreview < 0 ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'
         }`}>
-          <div className="text-slate-500 text-[10px] uppercase tracking-wider">Calculated Net P&L</div>
-          <div className={`text-base font-bold ${netPLPreview > 0 ? 'text-emerald-700' : netPLPreview < 0 ? 'text-rose-700' : 'text-slate-600'}`}>
-            {netPLPreview >= 0 ? '+' : ''}${Number(netPLPreview.toFixed(2))}
+          <div>
+            <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-0.5">Calculated Net P&L</div>
+            <div className={`text-base font-bold ${netPLPreview > 0 ? 'text-emerald-700' : netPLPreview < 0 ? 'text-rose-700' : 'text-slate-600'}`}>
+              {netPLPreview >= 0 ? '+' : ''}${Number(netPLPreview.toFixed(2))}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-0.5">R-Multiple</div>
+            <div className={`text-base font-bold ${rrPreview > 0 ? 'text-emerald-700' : rrPreview < 0 ? 'text-rose-700' : 'text-slate-600'}`}>
+              {rrPreview >= 0 ? '+' : ''}{Number(rrPreview.toFixed(2))}R
+            </div>
           </div>
         </div>
 

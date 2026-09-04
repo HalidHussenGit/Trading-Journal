@@ -23,6 +23,31 @@ export interface PositionCalculationResult {
   message?: string;
 }
 
+/**
+ * Core RR formula — always price-distance based, direction-aware.
+ *
+ * LONG:  risk = entry − SL,  reward = TP − entry
+ * SHORT: risk = SL − entry,  reward = entry − TP
+ *
+ * Both produce positive distances when price levels are correct for the direction.
+ * Returns 0 if any required input is missing/invalid.
+ */
+export function computePriceBasedRR(
+  entry: number,
+  stopLoss: number,
+  exitOrTP: number,
+  direction: 'Long' | 'Short'
+): number {
+  if (!entry || !stopLoss || !exitOrTP || entry <= 0 || stopLoss <= 0 || exitOrTP <= 0) return 0;
+
+  const riskDistance    = direction === 'Long' ? entry - stopLoss    : stopLoss - entry;
+  const rewardDistance  = direction === 'Long' ? exitOrTP - entry    : entry - exitOrTP;
+
+  if (riskDistance <= 0) return 0;
+  // RR = abs(reward) / abs(risk) — always positive for correct direction levels
+  return rewardDistance / riskDistance;
+}
+
 export function calculateRiskAndPositionSize(params: PositionCalculationParams): PositionCalculationResult {
   const {
     entry,
@@ -49,9 +74,12 @@ export function calculateRiskAndPositionSize(params: PositionCalculationParams):
     };
   }
 
-  const isLong = direction === 'Long';
-  const stopDistance = isLong ? (entry - stopLoss) : (stopLoss - entry);
-  const targetDistance = takeProfit > 0 ? (isLong ? (takeProfit - entry) : (entry - takeProfit)) : 0;
+  // Risk distance: always positive when SL is on the correct side of entry
+  const stopDistance   = direction === 'Long' ? (entry - stopLoss)   : (stopLoss - entry);
+  // Reward distance: always positive when TP is on the correct side of entry
+  const targetDistance = takeProfit > 0
+    ? (direction === 'Long' ? (takeProfit - entry) : (entry - takeProfit))
+    : 0;
 
   if (stopDistance <= 0) {
     return {
@@ -63,14 +91,15 @@ export function calculateRiskAndPositionSize(params: PositionCalculationParams):
       potentialLoss: 0,
       potentialProfit: 0,
       isValid: false,
-      message: isLong ? 'Stop Loss must be below Entry for Long' : 'Stop Loss must be above Entry for Short'
+      message: direction === 'Long' ? 'Stop Loss must be below Entry for Long' : 'Stop Loss must be above Entry for Short'
     };
   }
 
   const riskAmount = (accountBalance * riskPercent) / 100;
+  // Planned RR = reward distance / risk distance (pure price-based, no dollar values involved)
   const plannedRR = targetDistance > 0 ? targetDistance / stopDistance : 0;
 
-  // Position Sizing: RiskAmount / (StopDistance * PointValue * ContractSize)
+  // Position Sizing: RiskAmount / (StopDistance × PointValue × ContractSize)
   const positionSize = riskAmount / (stopDistance * (pointValue || 1) * (contractSize || 1));
   const potentialLoss = riskAmount;
   const potentialProfit = riskAmount * plannedRR;
@@ -115,27 +144,38 @@ export function calculateMultiExitResults(
   let totalWeight = 0;
   let weightedPriceSum = 0;
   let totalPL = 0;
+  // Weighted sum of per-exit R values (each exit's R × its size %)
+  let weightedRSum = 0;
+
+  const initialRisk = (entry && stopLoss && direction)
+    ? (direction === 'Long' ? entry - stopLoss : stopLoss - entry)
+    : 0;
 
   exits.forEach(exit => {
     const sizePct = exit.sizePercent || 0;
     totalWeight += sizePct;
     weightedPriceSum += (exit.exitPrice || 0) * sizePct;
     totalPL += (exit.realizedPL || 0);
+
+    // Per-exit R = price distance / initial risk (pure price-based, no lot size)
+    if (entry && initialRisk > 0 && exit.exitPrice) {
+      const exitPriceDiff = direction === 'Long'
+        ? exit.exitPrice - entry
+        : entry - exit.exitPrice;
+      const exitR = exitPriceDiff / initialRisk;
+      weightedRSum += exitR * sizePct;
+    }
   });
 
   const weightedExitPrice = totalWeight > 0 ? weightedPriceSum / totalWeight : 0;
-  
+
   let totalRealizedR = 0;
-  if (entry && stopLoss && direction && totalWeight > 0) {
-    const initialRisk = direction === 'Long' ? entry - stopLoss : stopLoss - entry;
-    if (initialRisk > 0) {
-      const priceDiff = direction === 'Long' ? weightedExitPrice - entry : entry - weightedExitPrice;
-      // We weight the totalRealizedR by how much size was actually taken out
-      totalRealizedR = (priceDiff / initialRisk) * (totalWeight / 100);
-    } else if (plannedRiskAmount > 0) {
-      totalRealizedR = totalPL / plannedRiskAmount;
-    }
+  if (initialRisk > 0 && totalWeight > 0) {
+    // Weighted average R across all partial exits
+    // = sum(exitR × sizePercent) / totalSizePercent
+    totalRealizedR = weightedRSum / totalWeight;
   } else if (plannedRiskAmount > 0) {
+    // Fallback: dollar-based when price levels aren't available
     totalRealizedR = totalPL / plannedRiskAmount;
   }
 
@@ -519,18 +559,12 @@ export function rehydrateTradeResult(trade: Trade): Trade {
 
   if (!entry || !actualExit || entry === actualExit) return trade;
 
-  const priceDiff = direction === 'Long'
-    ? actualExit - entry
-    : entry - actualExit;
+  // Use the same computePriceBasedRR formula: abs(exit−entry) / abs(entry−SL)
+  const rMultiple = computePriceBasedRR(entry, sl, actualExit, direction);
 
-  const initialRisk = direction === 'Long'
-    ? entry - sl
-    : sl - entry;
+  // Need both riskAmount and a valid rMultiple to recalculate meaningfully
+  if (riskAmount <= 0 || rMultiple === 0) return trade;
 
-  // Need both riskAmount and a valid stop distance to recalculate meaningfully
-  if (riskAmount <= 0 || initialRisk <= 0) return trade;
-
-  const rMultiple = priceDiff / initialRisk;
   const fees = actual.fees || 0;
   const commission = actual.commission || 0;
   const swap = actual.swap || 0;
