@@ -492,11 +492,11 @@ class SupabaseDatabaseService {
       psych_energy_rating: trade.psychology?.energyRating,
       psych_post_trade_emotion: trade.psychology?.postTradeEmotion,
 
-      quality_setup: trade.qualityScores?.setup || 0,
-      quality_execution: trade.qualityScores?.execution || 0,
-      quality_risk_management: trade.qualityScores?.riskManagement || 0,
-      quality_psychology: trade.qualityScores?.psychology || 0,
-      quality_discipline: trade.qualityScores?.discipline || 0,
+      quality_setup: trade.qualityScores?.setup || null,
+      quality_execution: trade.qualityScores?.execution || null,
+      quality_risk_management: trade.qualityScores?.riskManagement || null,
+      quality_psychology: trade.qualityScores?.psychology || null,
+      quality_discipline: trade.qualityScores?.discipline || null,
 
       journal_thesis: trade.journal?.thesis || '',
       journal_what_went_well: trade.journal?.whatWentWell || '',
@@ -514,9 +514,6 @@ class SupabaseDatabaseService {
       updated_at: new Date().toISOString()
     };
     if (!isNew) tradeRow.id = trade.id;
-
-    // Diagnostic: log the full payload to help debug 400 errors
-    console.log('[saveTrade] Sending payload to Supabase:', JSON.stringify(tradeRow, null, 2));
 
     const { data: savedTrade, error: tradeErr } = await supabase
       .from('trades')
