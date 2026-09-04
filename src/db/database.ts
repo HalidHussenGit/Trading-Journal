@@ -447,7 +447,7 @@ class SupabaseDatabaseService {
       direction: trade.direction,
       status: trade.status,
       trade_date: trade.date,
-      trade_time: trade.time,
+      trade_time: trade.time || null,  // send null if empty to avoid TIME column rejection
       session: trade.session,
       timeframe: trade.timeframe,
       market_condition: trade.marketCondition,
@@ -515,6 +515,9 @@ class SupabaseDatabaseService {
     };
     if (!isNew) tradeRow.id = trade.id;
 
+    // Diagnostic: log the full payload to help debug 400 errors
+    console.log('[saveTrade] Sending payload to Supabase:', JSON.stringify(tradeRow, null, 2));
+
     const { data: savedTrade, error: tradeErr } = await supabase
       .from('trades')
       .upsert(tradeRow)
@@ -522,7 +525,15 @@ class SupabaseDatabaseService {
       .single();
     if (tradeErr) {
       console.error('Error saving trade record:', tradeErr);
-      throw tradeErr;
+      console.error('Error details:', JSON.stringify({
+        message: tradeErr.message,
+        code: (tradeErr as any).code,
+        hint: (tradeErr as any).hint,
+        details: (tradeErr as any).details
+      }));
+      console.error('Session being sent:', tradeRow.session);
+      console.error('Timeframe being sent:', tradeRow.timeframe);
+      throw new Error(tradeErr.message || JSON.stringify(tradeErr));
     }
     const realTradeId: string = savedTrade.id;
 

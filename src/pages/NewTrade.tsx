@@ -5,14 +5,25 @@ import { calculateRiskAndPositionSize, calculateMultiExitResults } from '../util
 import { validateTrade } from '../utils/validation';
 import { PageId } from '../components/layout/Sidebar';
 
-// Auto-detect the trading session from a HH:mm time string (assumes UTC/broker time)
+// Auto-detect the trading session from a HH:mm time string.
+// Uses UTC time to correctly map sessions regardless of user timezone.
 function getSessionFromTime(timeStr: string): string {
-  if (!timeStr) return 'Off-Hours';
-  const [h] = timeStr.split(':').map(Number);
-  if (h >= 7 && h <= 11) return 'London';
-  if (h >= 12 && h <= 16) return 'New York (AM)';
-  if (h >= 17 && h <= 19) return 'New York (PM)';
-  if (h >= 0 && h <= 6) return 'Asian';
+  if (!timeStr || !timeStr.includes(':')) return 'Off-Hours';
+  const [localH, localM] = timeStr.split(':').map(Number);
+  if (isNaN(localH) || isNaN(localM)) return 'Off-Hours';
+  
+  // Convert local time to UTC using the browser's timezone offset
+  const now = new Date();
+  const offsetMinutes = now.getTimezoneOffset(); // negative for UTC+
+  const totalLocalMinutes = localH * 60 + localM;
+  const totalUTCMinutes = ((totalLocalMinutes + offsetMinutes) % 1440 + 1440) % 1440;
+  const utcH = Math.floor(totalUTCMinutes / 60);
+
+  // Standard market session windows (UTC)
+  if (utcH >= 0 && utcH <= 6) return 'Asian';
+  if (utcH >= 7 && utcH <= 11) return 'London';
+  if (utcH >= 12 && utcH <= 16) return 'New York (AM)';
+  if (utcH >= 17 && utcH <= 19) return 'New York (PM)';
   return 'Off-Hours';
 }
 
@@ -403,8 +414,8 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 value={time}
                 onChange={e => {
                   const newTime = e.target.value;
+                  if (!newTime) return; // guard: ignore empty value from 12-hr AM/PM pickers
                   setTime(newTime);
-                  // Auto-detect session from time unless user has manually set it
                   setSession(getSessionFromTime(newTime));
                 }}
                 className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
