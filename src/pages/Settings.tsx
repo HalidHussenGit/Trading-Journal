@@ -118,18 +118,24 @@ export const SettingsPage: React.FC = () => {
 
         {/* Account & Session */}
         <div className="space-y-4 pt-6 border-t border-slate-200">
-          <h3 className="text-xs font-bold text-slate-900 uppercase">Account & Session</h3>
-          <div className="flex items-center justify-between p-4 border border-slate-100 bg-slate-50/50 rounded-lg">
-            <div>
+          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Account & Session</h3>
+          <div className="group relative overflow-hidden flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:border-rose-100 hover:shadow-sm transition-all duration-300">
+            {/* Subtle background glow effect on hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-50/0 via-rose-50/0 to-rose-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            
+            <div className="relative z-10">
               <p className="text-sm font-semibold text-slate-900">Sign Out</p>
               <p className="text-xs text-slate-500 mt-0.5">End your current session on this device.</p>
             </div>
             <button
               type="button"
               onClick={logout}
-              className="px-4 py-2 bg-rose-600 text-white text-xs font-medium rounded hover:bg-rose-700 transition-colors shadow-xs"
+              className="relative z-10 flex items-center gap-2 px-4 py-2 bg-white text-rose-600 border border-rose-200 text-xs font-semibold rounded-lg hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition-all shadow-sm active:scale-95"
             >
-              Sign Out
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
