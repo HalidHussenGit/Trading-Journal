@@ -1,4 +1,4 @@
-export type AccountType = 'Personal' | 'PropFirm' | 'Funded' | 'Demo' | 'Backtest' | 'Other';
+export type AccountType = 'Personal' | 'PropFirm' | 'Funded' | 'Demo' | 'Backtest' | 'Real' | 'Other';
 export type AccountStatus = 'Active' | 'Archived' | 'Closed';
 
 export interface Account {

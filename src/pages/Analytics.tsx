@@ -3,15 +3,44 @@ import { useJournal } from '../context/JournalContext';
 import { calculatePortfolioMetrics, calculateAdherenceBuckets } from '../utils/calculations';
 
 export const Analytics: React.FC = () => {
-  const { trades, setups } = useJournal();
+  const { trades, setups, accounts } = useJournal();
   const [activeTab, setActiveTab] = useState<'overview' | 'setups' | 'adherence' | 'violations' | 'sessions'>('overview');
+  const [selectedAccountType, setSelectedAccountType] = useState<string>('All');
 
-  const closedTrades = trades.filter(t => t.status === 'Closed' && !t.isArchived);
+  const availableAccountTypes = Array.from(new Set(accounts.map(a => a.accountType))).sort();
+
+  const filteredAccountIds = new Set(
+    accounts
+      .filter(a => selectedAccountType === 'All' || a.accountType === selectedAccountType)
+      .map(a => a.id)
+  );
+
+  const closedTrades = trades.filter(t => 
+    t.status === 'Closed' && 
+    !t.isArchived && 
+    filteredAccountIds.has(t.accountId)
+  );
+  
   const metrics = calculatePortfolioMetrics(closedTrades);
   const adherenceBuckets = calculateAdherenceBuckets(closedTrades);
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Account Type Filter */}
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-4">
+        <label className="text-xs font-bold text-slate-700 uppercase">Account Type:</label>
+        <select 
+          value={selectedAccountType}
+          onChange={(e) => setSelectedAccountType(e.target.value)}
+          className="text-sm bg-slate-50 border border-slate-200 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
+        >
+          <option value="All">All Types</option>
+          {availableAccountTypes.map(type => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Analytics Tab Header */}
       <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-4 overflow-x-auto">
         {[
