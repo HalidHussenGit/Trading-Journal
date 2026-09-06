@@ -12,18 +12,19 @@ function getSessionFromTime(timeStr: string): string {
   const [localH, localM] = timeStr.split(':').map(Number);
   if (isNaN(localH) || isNaN(localM)) return 'Off-Hours';
   
-  // Convert local time to UTC using the browser's timezone offset
-  const now = new Date();
-  const offsetMinutes = now.getTimezoneOffset(); // negative for UTC+
   const totalLocalMinutes = localH * 60 + localM;
-  const totalUTCMinutes = ((totalLocalMinutes + offsetMinutes) % 1440 + 1440) % 1440;
-  const utcH = Math.floor(totalUTCMinutes / 60);
 
-  // Standard market session windows (UTC)
-  if (utcH >= 0 && utcH <= 6) return 'Asian';
-  if (utcH >= 7 && utcH <= 11) return 'London';
-  if (utcH >= 12 && utcH <= 16) return 'New York (AM)';
-  if (utcH >= 17 && utcH <= 19) return 'New York (PM)';
+  // Asian Range: 20:00 - 00:00
+  if (totalLocalMinutes >= 1200 || totalLocalMinutes === 0) return 'Asian Range';
+  // London Open: 02:00 - 05:00
+  if (totalLocalMinutes >= 120 && totalLocalMinutes <= 300) return 'London Open';
+  // NY AM session: 08:30 - 11:00
+  if (totalLocalMinutes >= 510 && totalLocalMinutes <= 660) return 'NY AM Session';
+  // NY Lunch Time: 11:00 - 13:00
+  if (totalLocalMinutes > 660 && totalLocalMinutes <= 780) return 'NY Lunch Time';
+  // NY PM Session: 13:30 - 16:00
+  if (totalLocalMinutes >= 810 && totalLocalMinutes <= 960) return 'NY PM Session';
+
   return 'Off-Hours';
 }
 
@@ -431,11 +432,11 @@ export const NewTrade: React.FC<NewTradeProps> = ({ onNavigate, existingTrade })
                 onChange={e => setSession(e.target.value as any)}
                 className="w-full px-3 py-1.5 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"
               >
-                <option value="Asian">Asian</option>
-                <option value="London">London</option>
-                <option value="New York (AM)">New York (AM)</option>
-                <option value="New York (PM)">New York (PM)</option>
-                <option value="Overlap">Overlap</option>
+                <option value="Asian Range">Asian Range</option>
+                <option value="London Open">London Open</option>
+                <option value="NY AM Session">NY AM Session</option>
+                <option value="NY Lunch Time">NY Lunch Time</option>
+                <option value="NY PM Session">NY PM Session</option>
                 <option value="Off-Hours">Off-Hours</option>
               </select>
             </div>

@@ -351,7 +351,7 @@ class SupabaseDatabaseService {
         status: row.status || 'Draft',
         date: row.trade_date,
         time: row.trade_time || '00:00',
-        session: row.session || 'London',
+        session: row.session || 'London Open',
         timeframe: row.timeframe || '15m',
         marketCondition: row.market_condition || '',
         tags: row.tags || [],

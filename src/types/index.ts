@@ -189,7 +189,7 @@ export interface Trade {
   status: TradeStatus;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
-  session: 'Asian' | 'London' | 'New York (AM)' | 'New York (PM)' | 'Overlap' | 'Off-Hours';
+  session: 'Asian Range' | 'London Open' | 'NY AM Session' | 'NY Lunch Time' | 'NY PM Session' | 'Off-Hours' | string;
   timeframe: string;
   marketCondition: string;
   tags: string[];

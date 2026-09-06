@@ -20,7 +20,7 @@ export const Setups: React.FC = () => {
       market: 'Forex',
       instrument: 'EURUSD, GBPUSD',
       timeframes: ['15m', '1h'],
-      sessions: ['London', 'New York'],
+      sessions: ['London Open', 'NY AM Session'],
       entryModel: 'Breakout & Retest',
       stopLossModel: 'Swing High/Low',
       takeProfitModel: 'Fixed R:R / Liquidity Pool',
