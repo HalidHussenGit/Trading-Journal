@@ -5,14 +5,12 @@ import { calculatePortfolioMetrics, calculateAdherenceBuckets } from '../utils/c
 export const Analytics: React.FC = () => {
   const { trades, setups, accounts } = useJournal();
   const [activeTab, setActiveTab] = useState<'overview' | 'setups' | 'adherence' | 'violations' | 'sessions'>('overview');
-  const [selectedAccountType, setSelectedAccountType] = useState<string>('All');
-
-  const availableAccountTypes = Array.from(new Set(accounts.map(a => a.accountType))).sort();
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('All');
 
   const filteredAccountIds = new Set(
-    accounts
-      .filter(a => selectedAccountType === 'All' || a.accountType === selectedAccountType)
-      .map(a => a.id)
+    selectedAccountId === 'All' 
+      ? accounts.map(a => a.id)
+      : [selectedAccountId]
   );
 
   const closedTrades = trades.filter(t => 
@@ -26,17 +24,19 @@ export const Analytics: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Account Type Filter */}
+      {/* Account Filter */}
       <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-4">
-        <label className="text-xs font-bold text-slate-700 uppercase">Account Type:</label>
+        <label className="text-xs font-bold text-slate-700 uppercase">Account:</label>
         <select 
-          value={selectedAccountType}
-          onChange={(e) => setSelectedAccountType(e.target.value)}
+          value={selectedAccountId}
+          onChange={(e) => setSelectedAccountId(e.target.value)}
           className="text-sm bg-slate-50 border border-slate-200 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-900"
         >
-          <option value="All">All Types</option>
-          {availableAccountTypes.map(type => (
-            <option key={type} value={type}>{type}</option>
+          <option value="All">All Accounts</option>
+          {accounts.map(acc => (
+            <option key={acc.id} value={acc.id}>
+              {acc.name} ({acc.accountType})
+            </option>
           ))}
         </select>
       </div>
