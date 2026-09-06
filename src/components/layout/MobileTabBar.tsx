@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PageId } from './Sidebar';
+import { useJournal } from '../../context/JournalContext';
 
 interface MobileTabBarProps {
   activePage: PageId;
@@ -8,6 +9,7 @@ interface MobileTabBarProps {
 
 export const MobileTabBar: React.FC<MobileTabBarProps> = ({ activePage, onNavigate }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { logout, currentUser } = useJournal();
 
   const tabs: { id: PageId | 'menu'; label: string; icon: React.ReactNode }[] = [
     {
@@ -82,8 +84,15 @@ export const MobileTabBar: React.FC<MobileTabBarProps> = ({ activePage, onNaviga
       {isMenuOpen && (
         <div className="fixed inset-0 bg-slate-900/60 z-40 md:hidden" onClick={() => setIsMenuOpen(false)}>
           <div className="absolute bottom-[68px] left-0 w-full bg-slate-900 rounded-t-2xl px-4 py-6 text-slate-200">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">More Options</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center justify-between mb-4 px-2">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">More Options</h3>
+              {currentUser && (
+                <span className="text-xs font-mono font-semibold text-slate-400 bg-slate-800 px-2 py-1 rounded">
+                  @{currentUser.username}
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-4">
               {menuItems.map(item => (
                 <button
                   key={item.id}
@@ -96,6 +105,21 @@ export const MobileTabBar: React.FC<MobileTabBarProps> = ({ activePage, onNaviga
                   <span className="text-[10px] font-medium text-center">{item.label}</span>
                 </button>
               ))}
+            </div>
+
+            <div className="border-t border-slate-800 pt-4 flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  logout();
+                  setIsMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center p-3 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span className="text-sm font-semibold">Sign Out</span>
+              </button>
             </div>
           </div>
         </div>

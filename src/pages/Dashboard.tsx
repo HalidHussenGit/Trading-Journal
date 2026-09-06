@@ -114,6 +114,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="text-xs font-semibold text-slate-700">Filter Overview:</div>
           
           <select
+            value={filters.accountId}
+            onChange={(e) => setFilters(prev => ({ ...prev, accountId: e.target.value }))}
+            className="bg-slate-50 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-800"
+          >
+            <option value="ALL">All Accounts ({accounts.length})</option>
+            {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+          </select>
+
+          <select
             value={filters.setupId}
             onChange={(e) => setFilters(prev => ({ ...prev, setupId: e.target.value }))}
             className="bg-slate-50 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-800"
