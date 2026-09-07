@@ -182,94 +182,6 @@
 
 ---
 
-## Table: `trades`
-
-**Row Level Security (RLS) Enabled:** false
-
-### Columns
-
-| Column | Type | Nullable |
-|---|---|---|
-| id | uuid | NO |
-| user_id | uuid | NO |
-| account_id | uuid | NO |
-| setup_id | uuid | YES |
-| symbol | text | NO |
-| direction | text | NO |
-| status | text | NO |
-| trade_date | date | NO |
-| trade_time | time without time zone | YES |
-| session | text | YES |
-| timeframe | text | YES |
-| market_condition | text | YES |
-| tags | ARRAY | NO |
-| violations | ARRAY | NO |
-| planned_entry | numeric | YES |
-| planned_stop_loss | numeric | YES |
-| planned_take_profit | numeric | YES |
-| planned_risk_percent | numeric | YES |
-| planned_risk_amount | numeric | YES |
-| planned_rr | numeric | YES |
-| planned_position_size | numeric | YES |
-| planned_point_value | numeric | YES |
-| planned_contract_size | numeric | YES |
-| planned_leverage | numeric | YES |
-| actual_entry | numeric | YES |
-| actual_exit | numeric | YES |
-| actual_position_size | numeric | YES |
-| actual_fees | numeric | YES |
-| actual_commission | numeric | YES |
-| actual_swap | numeric | YES |
-| actual_slippage | numeric | YES |
-| actual_exit_reason | text | YES |
-| result_status | text | YES |
-| result_net_pl | numeric | YES |
-| result_gross_pl | numeric | YES |
-| result_r_multiple | numeric | YES |
-| result_holding_time_minutes | integer | YES |
-| checklist_snapshot | jsonb | NO |
-| psych_pre_trade_emotion | text | YES |
-| psych_confidence_rating | integer | YES |
-| psych_focus_rating | integer | YES |
-| psych_stress_rating | integer | YES |
-| psych_patience_rating | integer | YES |
-| psych_energy_rating | integer | YES |
-| psych_post_trade_emotion | text | YES |
-| quality_setup | integer | YES |
-| quality_execution | integer | YES |
-| quality_risk_management | integer | YES |
-| quality_psychology | integer | YES |
-| quality_discipline | integer | YES |
-| quality_overall | numeric | YES |
-| journal_thesis | text | YES |
-| journal_what_went_well | text | YES |
-| journal_what_went_wrong | text | YES |
-| journal_followed_plan | text | YES |
-| journal_interfered_during_trade | boolean | NO |
-| journal_moved_stop_loss | boolean | NO |
-| journal_closed_early | boolean | NO |
-| journal_hesitated_on_entry | boolean | NO |
-| journal_revenge_or_overtraded | boolean | NO |
-| journal_lessons_learned | text | YES |
-| journal_what_to_do_differently | text | YES |
-| is_archived | boolean | NO |
-| created_at | timestamp with time zone | NO |
-| updated_at | timestamp with time zone | NO |
-| planned_lot_size | numeric | YES |
-| actual_lot_size | numeric | YES |
-
-### Relationships
-
-- `user_id` references `users`(`id`)
-- `account_id` references `accounts`(`id`)
-- `setup_id` references `setups`(`id`)
-
-### RLS Policies
-
-*No policies defined*
-
----
-
 ## Table: `trade_screenshots`
 
 **Row Level Security (RLS) Enabled:** false
@@ -392,3 +304,92 @@
 ### RLS Policies
 
 *No policies defined*
+
+---
+
+## Table: `trades`
+
+**Row Level Security (RLS) Enabled:** false
+
+### Columns
+
+| Column | Type | Nullable |
+|---|---|---|
+| id | uuid | NO |
+| user_id | uuid | NO |
+| account_id | uuid | NO |
+| setup_id | uuid | YES |
+| symbol | text | NO |
+| direction | text | NO |
+| status | text | NO |
+| trade_date | date | NO |
+| trade_time | time without time zone | YES |
+| session | text | YES |
+| timeframe | text | YES |
+| market_condition | text | YES |
+| tags | ARRAY | NO |
+| violations | ARRAY | NO |
+| planned_entry | numeric | YES |
+| planned_stop_loss | numeric | YES |
+| planned_take_profit | numeric | YES |
+| planned_risk_percent | numeric | YES |
+| planned_risk_amount | numeric | YES |
+| planned_rr | numeric | YES |
+| planned_position_size | numeric | YES |
+| planned_point_value | numeric | YES |
+| planned_contract_size | numeric | YES |
+| planned_leverage | numeric | YES |
+| actual_entry | numeric | YES |
+| actual_exit | numeric | YES |
+| actual_position_size | numeric | YES |
+| actual_fees | numeric | YES |
+| actual_commission | numeric | YES |
+| actual_swap | numeric | YES |
+| actual_slippage | numeric | YES |
+| actual_exit_reason | text | YES |
+| result_status | text | YES |
+| result_net_pl | numeric | YES |
+| result_gross_pl | numeric | YES |
+| result_r_multiple | numeric | YES |
+| result_holding_time_minutes | integer | YES |
+| checklist_snapshot | jsonb | NO |
+| psych_pre_trade_emotion | text | YES |
+| psych_confidence_rating | integer | YES |
+| psych_focus_rating | integer | YES |
+| psych_stress_rating | integer | YES |
+| psych_patience_rating | integer | YES |
+| psych_energy_rating | integer | YES |
+| psych_post_trade_emotion | text | YES |
+| quality_setup | integer | YES |
+| quality_execution | integer | YES |
+| quality_risk_management | integer | YES |
+| quality_psychology | integer | YES |
+| quality_discipline | integer | YES |
+| quality_overall | numeric | YES |
+| journal_thesis | text | YES |
+| journal_what_went_well | text | YES |
+| journal_what_went_wrong | text | YES |
+| journal_followed_plan | text | YES |
+| journal_interfered_during_trade | boolean | NO |
+| journal_moved_stop_loss | boolean | NO |
+| journal_closed_early | boolean | NO |
+| journal_hesitated_on_entry | boolean | NO |
+| journal_revenge_or_overtraded | boolean | NO |
+| journal_lessons_learned | text | YES |
+| journal_what_to_do_differently | text | YES |
+| is_archived | boolean | NO |
+| created_at | timestamp with time zone | NO |
+| updated_at | timestamp with time zone | NO |
+| planned_lot_size | numeric | YES |
+| actual_lot_size | numeric | YES |
+
+### Relationships
+
+- `user_id` references `users`(`id`)
+- `account_id` references `accounts`(`id`)
+- `setup_id` references `setups`(`id`)
+
+### RLS Policies
+
+*No policies defined*
+
