@@ -294,6 +294,9 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
   let maxDDAmount = 0;
   let maxDDPercent = 0;
 
+  let explicitWinCount = 0;
+  let explicitWinR = 0;
+
   sorted.forEach(t => {
     const pl = t.result?.netPL || 0;
     const r = t.result?.rMultiple || 0;
@@ -315,6 +318,8 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
 
     if (outcomeStatus === 'Win' || outcomeStatus === 'Partial Win') {
       isWin = true;
+      explicitWinCount++;
+      explicitWinR += r;
     } else if (outcomeStatus === 'Loss' || outcomeStatus === 'Partial Loss') {
       isLoss = true;
     } else if (outcomeStatus === 'Breakeven') {
@@ -370,7 +375,7 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
   const winRate = (winningCount / closedTrades.length) * 100;
   const avgWinPL = winningCount > 0 ? grossWins / winningCount : 0;
   const avgLossPL = losingCount > 0 ? grossLosses / losingCount : 0;
-  const avgR = winningCount > 0 ? winningR / winningCount : 0;
+  const avgR = explicitWinCount > 0 ? explicitWinR / explicitWinCount : 0;
 
   const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? 999 : 0;
 
