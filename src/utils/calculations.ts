@@ -379,11 +379,11 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
 
   const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? 999 : 0;
 
-  // Expectancy = (WinRate * AvgWin) - (LossRate * AvgLoss)
+  // Expectancy (dollar) = (WinRate * AvgWin) - (LossRate * AvgLoss)
   const lossRate = (losingCount / closedTrades.length);
   const expectancy = ((winRate / 100) * avgWinPL) - (lossRate * avgLossPL);
-  const avgLossR = losingCount > 0 ? losingR / losingCount : 0;
-  const expectancyR = ((winRate / 100) * avgR) - (lossRate * avgLossR);
+  // ExpectancyR = average R of Win + Partial Win trades only (losses excluded)
+  const expectancyR = avgR;
 
   const currentDDAmount = peakBalance - currentBalance;
   const currentDDPercent = peakBalance > 0 ? (currentDDAmount / peakBalance) * 100 : 0;
