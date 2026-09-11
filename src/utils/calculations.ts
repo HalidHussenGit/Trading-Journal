@@ -372,7 +372,10 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
     }
   });
 
-  const winRate = (winningCount / closedTrades.length) * 100;
+  // Win Rate = (Wins + Partial Wins) / (Total Trades − Breakevens) × 100
+  // Breakevens are excluded from the denominator as they are neutral outcomes.
+  const effectiveTrades = closedTrades.length - breakevenCount;
+  const winRate = effectiveTrades > 0 ? (winningCount / effectiveTrades) * 100 : 0;
   const avgWinPL = winningCount > 0 ? grossWins / winningCount : 0;
   const avgLossPL = losingCount > 0 ? grossLosses / losingCount : 0;
   const avgR = explicitWinCount > 0 ? explicitWinR / explicitWinCount : 0;
@@ -380,7 +383,7 @@ export function calculatePortfolioMetrics(trades: Trade[], accountInitialBalance
   const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? 999 : 0;
 
   // Expectancy (dollar) = (WinRate * AvgWin) - (LossRate * AvgLoss)
-  const lossRate = (losingCount / closedTrades.length);
+  const lossRate = effectiveTrades > 0 ? (losingCount / effectiveTrades) : 0;
   const expectancy = ((winRate / 100) * avgWinPL) - (lossRate * avgLossPL);
   // ExpectancyR = average R of Win + Partial Win trades only (losses excluded)
   const expectancyR = avgR;
